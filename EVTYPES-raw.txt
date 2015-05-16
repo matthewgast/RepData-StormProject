@@ -1,0 +1,261 @@
+
+storm.data <- mergeEvents(storm.data, "HAIL",
+	   "HAIL 0.75",
+	   
+[245] "HAIL 0.75"                      "HAIL 0.88"                     
+[247] "HAIL 075"                       "HAIL 088"                      
+[249] "HAIL 1.00"                      "HAIL 1.75"                     
+[251] "HAIL 1.75)"                     "HAIL 100"                      
+[253] "HAIL 125"                       "HAIL 150"                      
+[255] "HAIL 175"                       "HAIL 200"                      
+[257] "HAIL 225"                       "HAIL 275"                      
+[259] "HAIL 450"                       "HAIL 75"                       
+[261] "HAIL 80"                        "HAIL 88"                       
+[263] "HAIL ALOFT"                     "HAIL DAMAGE"                   
+[265] "HAIL FLOODING"                  "HAIL STORM"                    
+[267] "Hail(0.75)"                     "HAIL/ICY ROADS"                
+[269] "HAIL/WIND"                      "HAIL/WINDS"                    
+[271] "HAILSTORM"                      "HAILSTORMS"                    
+[617] "SMALL HAIL" 
+)
+
+storm.data <- mergeEvents(storm.data, "HEAT"
+[275] "HEAT"                           "HEAT DROUGHT"                  
+                      "HEAT WAVE"                     
+[279] "HEAT WAVE DROUGHT"              "HEAT WAVES"                    
+[281] "HEAT/DROUGHT"                   "HEATBURST"
+[885] "UNSEASONABLY HOT"               "UNSEASONABLY WARM"             
+[887] "UNSEASONABLY WARM & WET"        "UNSEASONABLY WARM AND DRY"     
+[889] "UNSEASONABLY WARM YEAR"         "UNSEASONABLY WARM/WET"         
+"UNUSUAL WARMTH"
+"UNUSUALLY WARM"
+"UNUSUAL/RECORD WARMTH"
+"VERY WARM" 
+"WARM WEATHER"
+"RECORD WARM"                    "RECORD WARM TEMPS."            
+                  "RECORD WARMTH"
+[557] "RECORD HEAT"                    "RECORD HEAT WAVE"              
+                    "RECORD HIGH"                   
+[561] "RECORD HIGH TEMPERATURE"        "RECORD HIGH TEMPERATURES"      
+"PROLONG WARMTH"
+"EXCESSIVE HEAT"                
+"EXCESSIVE HEAT/DROUGHT"        
+)
+
+storm.data <- mergeEvents(storm.data, "HIGH WIND"
+[359] "HIGH WIND"                      "HIGH WIND (G40)"               
+[361] "HIGH WIND 48"                   "HIGH WIND 63"                  
+[363] "HIGH WIND 70"                   "HIGH WIND AND HEAVY SNOW"      
+[365] "HIGH WIND AND HIGH TIDES"       "HIGH WIND AND SEAS"            
+[367] "HIGH WIND DAMAGE"               "HIGH WIND/ BLIZZARD"           
+[369] "HIGH WIND/BLIZZARD"             "HIGH WIND/BLIZZARD/FREEZING RA"
+[371] "HIGH WIND/HEAVY SNOW"           "HIGH WIND/LOW WIND CHILL"      
+[373] "HIGH WIND/SEAS"                 "HIGH WIND/WIND CHILL"          
+[375] "HIGH WIND/WIND CHILL/BLIZZARD"  "HIGH WINDS"                    
+[377] "HIGH WINDS 55"                  "HIGH WINDS 57"                 
+[379] "HIGH WINDS 58"                  "HIGH WINDS 63"                 
+[381] "HIGH WINDS 66"                  "HIGH WINDS 67"                 
+[383] "HIGH WINDS 73"                  "HIGH WINDS 76"                 
+[385] "HIGH WINDS 80"                  "HIGH WINDS 82"                 
+[387] "HIGH WINDS AND WIND CHILL"      "HIGH WINDS DUST STORM"         
+[389] "HIGH WINDS HEAVY RAINS"         "HIGH WINDS/"                   
+[391] "HIGH WINDS/COASTAL FLOOD"       "HIGH WINDS/COLD"               
+[393] "HIGH WINDS/FLOODING"            "HIGH WINDS/HEAVY RAIN"         
+[395] "HIGH WINDS/SNOW"
+)
+
+storm.data <- mergeEvents(storm.data, "THUNDERSTORM WIND",
+             "THUDERSTORM WINDS"             
+[749] "THUNDEERSTORM WINDS"            "THUNDERESTORM WINDS"           
+[751] "THUNDERSNOW"                    "Thundersnow shower"            
+[753] "THUNDERSTORM"                   "THUNDERSTORM  WINDS"           
+[755] "THUNDERSTORM DAMAGE"            "THUNDERSTORM DAMAGE TO"        
+[757] "THUNDERSTORM HAIL"              "THUNDERSTORM W INDS"           
+[759] "Thunderstorm Wind"              "THUNDERSTORM WIND"             
+[761] "THUNDERSTORM WIND (G40)"        "THUNDERSTORM WIND 50"          
+[763] "THUNDERSTORM WIND 52"           "THUNDERSTORM WIND 56"          
+[765] "THUNDERSTORM WIND 59"           "THUNDERSTORM WIND 59 MPH"      
+[767] "THUNDERSTORM WIND 59 MPH."      "THUNDERSTORM WIND 60 MPH"      
+[769] "THUNDERSTORM WIND 65 MPH"       "THUNDERSTORM WIND 65MPH"       
+[771] "THUNDERSTORM WIND 69"           "THUNDERSTORM WIND 98 MPH"      
+[773] "THUNDERSTORM WIND G50"          "THUNDERSTORM WIND G51"         
+[775] "THUNDERSTORM WIND G52"          "THUNDERSTORM WIND G55"         
+[777] "THUNDERSTORM WIND G60"          "THUNDERSTORM WIND G61"         
+[779] "THUNDERSTORM WIND TREES"        "THUNDERSTORM WIND."            
+[781] "THUNDERSTORM WIND/ TREE"        "THUNDERSTORM WIND/ TREES"      
+[783] "THUNDERSTORM WIND/AWNING"       "THUNDERSTORM WIND/HAIL"        
+[785] "THUNDERSTORM WIND/LIGHTNING"    "THUNDERSTORM WINDS"            
+[787] "THUNDERSTORM WINDS      LE CEN" "THUNDERSTORM WINDS 13"         
+[789] "THUNDERSTORM WINDS 2"           "THUNDERSTORM WINDS 50"         
+[791] "THUNDERSTORM WINDS 52"          "THUNDERSTORM WINDS 53"         
+[793] "THUNDERSTORM WINDS 60"          "THUNDERSTORM WINDS 61"         
+[795] "THUNDERSTORM WINDS 62"          "THUNDERSTORM WINDS 63 MPH"     
+[797] "THUNDERSTORM WINDS AND"         "THUNDERSTORM WINDS FUNNEL CLOU"
+[799] "THUNDERSTORM WINDS G"           "THUNDERSTORM WINDS G60"        
+[801] "THUNDERSTORM WINDS HAIL"        "THUNDERSTORM WINDS HEAVY RAIN" 
+[803] "THUNDERSTORM WINDS LIGHTNING"   "THUNDERSTORM WINDS SMALL STREA"
+[805] "THUNDERSTORM WINDS URBAN FLOOD" "THUNDERSTORM WINDS."           
+[807] "THUNDERSTORM WINDS/ FLOOD"      "THUNDERSTORM WINDS/ HAIL"      
+[809] "THUNDERSTORM WINDS/FLASH FLOOD" "THUNDERSTORM WINDS/FLOODING"   
+[811] "THUNDERSTORM WINDS/FUNNEL CLOU" "THUNDERSTORM WINDS/HAIL"       
+[813] "THUNDERSTORM WINDS/HEAVY RAIN"  "THUNDERSTORM WINDS53"          
+[815] "THUNDERSTORM WINDSHAIL"         "THUNDERSTORM WINDSS"           
+[817] "THUNDERSTORM WINS"              "THUNDERSTORMS"                 
+[819] "THUNDERSTORMS WIND"             "THUNDERSTORMS WINDS"           
+[821] "THUNDERSTORMW"                  "THUNDERSTORMW 50"              
+[823] "THUNDERSTORMW WINDS"            "THUNDERSTORMWINDS"             
+[825] "THUNDERSTROM WIND"              "THUNDERSTROM WINDS"            
+[827] "THUNDERTORM WINDS"              "THUNDERTSORM WIND"             
+[829] "THUNDESTORM WINDS"              "THUNERSTORM WINDS"
+
+[855] "Tstm Wind"                      "TSTM WIND"                     
+[857] "TSTM WIND  (G45)"               "TSTM WIND (41)"                
+[859] "TSTM WIND (G35)"                "TSTM WIND (G40)"               
+[861] "TSTM WIND (G45)"                "TSTM WIND 40"                  
+[863] "TSTM WIND 45"                   "TSTM WIND 50"                  
+[865] "TSTM WIND 51"                   "TSTM WIND 52"                  
+[867] "TSTM WIND 55"                   "TSTM WIND 65)"                 
+[869] "TSTM WIND AND LIGHTNING"        "TSTM WIND DAMAGE"              
+[871] "TSTM WIND G45"                  "TSTM WIND G58"                 
+[873] "TSTM WIND/HAIL"                 "TSTM WINDS"                    
+[875] "TSTM WND"                       "TSTMW"                         
+"TUNDERSTORM WIND"     
+             
+)
+
+storm.data <- mergeEvents(storm.data, "THUNDERSTORM"
+[853] "TSTM"                           "TSTM HEAVY RAIN"               
+"SEVERE THUNDERSTORM"           
+[605] "SEVERE THUNDERSTORM WINDS"      "SEVERE THUNDERSTORMS"          
+)
+
+storm.data <- mergeEvents(storm.data, "RAIN"
+[289] "Heavy Rain"                     "HEAVY RAIN"                    
+[291] "HEAVY RAIN AND FLOOD"           "Heavy Rain and Wind"           
+[293] "HEAVY RAIN EFFECTS"             "HEAVY RAIN; URBAN FLOOD WINDS;"
+[295] "HEAVY RAIN/FLOODING"            "Heavy Rain/High Surf"          
+[297] "HEAVY RAIN/LIGHTNING"           "HEAVY RAIN/MUDSLIDES/FLOOD"    
+[299] "HEAVY RAIN/SEVERE WEATHER"      "HEAVY RAIN/SMALL STREAM URBAN" 
+[301] "HEAVY RAIN/SNOW"                "HEAVY RAIN/URBAN FLOOD"        
+[303] "HEAVY RAIN/WIND"                "HEAVY RAINFALL"                
+[305] "HEAVY RAINS"                    "HEAVY RAINS/FLOODING"          
+[845] "TORRENTIAL RAIN"                "Torrential Rainfall"           
+                          
+[891] "UNSEASONABLY WET"                          
+[893] "UNSEASONAL RAIN" 
+"RECORD/EXCESSIVE RAINFALL"
+[507] "Monthly Rainfall"               "MONTHLY RAINFALL"              
+
+)
+
+storm.data <- mergeEvents(storm.data, "SNOW",
+	   "HEAVY SNOW",
+           "HEAVY SNOW   FREEZING RAIN",
+	   "HEAVY SNOW & ICE",
+           "HEAVY SNOW AND",
+           "HEAVY SNOW AND HIGH WINDS",
+     	   "HEAVY SNOW AND ICE",
+           "HEAVY SNOW AND ICE STORM",      
+ 	   "HEAVY SNOW AND STRONG WINDS",
+    	   "HEAVY SNOW ANDBLOWING SNOW",
+    	   "HEAVY SNOW SHOWER",
+           "HEAVY SNOW SQUALLS",
+           "HEAVY SNOW-SQUALLS",
+           "HEAVY SNOW/BLIZZARD",
+           "HEAVY SNOW/BLIZZARD/AVALANCHE",
+  	   "HEAVY SNOW/BLOWING SNOW",
+ 	   "HEAVY SNOW/FREEZING RAIN",
+       	   "HEAVY SNOW/HIGH",
+ 	   "HEAVY SNOW/HIGH WIND",
+           "HEAVY SNOW/HIGH WINDS",
+           "HEAVY SNOW/HIGH WINDS & FLOOD",
+  	   "HEAVY SNOW/HIGH WINDS/FREEZING",
+ 	   "HEAVY SNOW/ICE",
+           "HEAVY SNOW/ICE STORM",
+	   "HEAVY SNOW/SLEET",
+           "HEAVY SNOW/SQUALLS",
+	   "HEAVY SNOW/WIND",
+           "HEAVY SNOW/WINTER STORM",
+	   "RECORD SNOW",
+	   "RECORD SNOW/COLD",
+	   "RECORD SNOWFALL",
+	   "RECORD WINTER SNOW",
+[629] "SNOW"                           "Snow Accumulation"             
+[631] "SNOW ACCUMULATION"              "SNOW ADVISORY"                 
+[633] "SNOW AND COLD"                  "SNOW AND HEAVY SNOW"           
+[635] "Snow and Ice"                   "SNOW AND ICE"                  
+[637] "SNOW AND ICE STORM"             "Snow and sleet"                
+[639] "SNOW AND SLEET"                 "SNOW AND WIND"                 
+[641] "SNOW DROUGHT"                   "SNOW FREEZING RAIN"            
+[643] "SNOW SHOWERS"                   "SNOW SLEET"                    
+[645] "SNOW SQUALL"                    "Snow squalls"                  
+[647] "Snow Squalls"                   "SNOW SQUALLS"                  
+[649] "SNOW- HIGH WIND- WIND CHILL"    "SNOW/ BITTER COLD"             
+[651] "SNOW/ ICE"                      "SNOW/BLOWING SNOW"             
+[653] "SNOW/COLD"                      "SNOW/FREEZING RAIN"            
+[655] "SNOW/HEAVY SNOW"                "SNOW/HIGH WINDS"               
+[657] "SNOW/ICE"                       "SNOW/ICE STORM"                
+[659] "SNOW/RAIN"                      "SNOW/RAIN/SLEET"               
+[661] "SNOW/SLEET"                     "SNOW/SLEET/FREEZING RAIN"      
+[663] "SNOW/SLEET/RAIN"                "SNOW\\COLD"                    
+[665] "SNOWFALL RECORD"
+"SNOWSTORM"  
+"UNUSUALLY LATE SNOW"
+[509] "Monthly Snowfall"               "MONTHLY SNOWFALL"              
+
+)
+
+storm.data <- mergeEvents(storm.data, "ICE",
+[417] "ICE"                            "ICE AND SNOW"                  
+[419] "ICE FLOES"                      "Ice Fog"                       
+[421] "ICE JAM"                        "Ice jam flood (minor"          
+[423] "ICE JAM FLOODING"               "ICE ON ROAD"                   
+[425] "ICE PELLETS"                    "ICE ROADS"                     
+[427] "ICE STORM"                      "ICE STORM AND SNOW"            
+[429] "ICE STORM/FLASH FLOOD"          "Ice/Snow"                      
+[431] "ICE/SNOW"                       "ICE/STRONG WINDS"              
+
+)
+
+storm.data <- mergeEvents(storm.data, "TORNADO",
+storm.data <- mergeEvents(storm.data, "TORNADO F0", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNADO F1", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNADO F2", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNADO F3", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNADOES", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNADOS", "TORNADO")
+storm.data <- mergeEvents(storm.data, "TORNDAO", "TORNADO")
+
+)
+
+
+
+storm.data <- mergeEvents(storm.data, "WIND" 
+[675] "Strong Wind"                    "STRONG WIND"                   
+[677] "STRONG WIND GUST"               "Strong winds"                  
+[679] "Strong Winds"                   "STRONG WINDS"                  
+[959] "Wind"                           "WIND"                          
+[965] "Wind Damage"                    "WIND DAMAGE"                   
+[967] "WIND GUSTS"                     "WIND STORM"                    
+[969] "WIND/HAIL"                      "WINDS"                         
+"WND"
+"WIND ADVISORY" 
+"STORM FORCE WINDS"
+[525] "NON TSTM WIND"                  "NON-SEVERE WIND DAMAGE"        
+[527] "NON-TSTM WIND"
+
+"STORM FORCE WINDS"
+[525] "NON TSTM WIND"                  "NON-SEVERE WIND DAMAGE"        
+[
+)
+
+storm.data <- mergeEvents(storm.data, "WINTER"
+[971] "WINTER MIX"                     "WINTER STORM"                  
+[973] "WINTER STORM HIGH WINDS"        "WINTER STORM/HIGH WIND"        
+[975] "WINTER STORM/HIGH WINDS"        "WINTER STORMS"                 
+[977] "Winter Weather"                 "WINTER WEATHER"                
+[979] "WINTER WEATHER MIX"             "WINTER WEATHER/MIX"            
+[981] "WINTERY MIX"                    "Wintry mix"                    
+[983] "Wintry Mix"                     "WINTRY MIX"                    
+ 
+)
