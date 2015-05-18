@@ -1,35 +1,63 @@
-# Get the data
+loadPackages <- function() {
+# Load required packages for the analysis of NOAA weather data.
+#
+# Input:  None.
+# Output: None.
+    
+    library(ggplot2)
+    library(dplyr)
+    library(gridExtra)
+    library(reshape2)
+    require(RColorBrewer)
+}
 
-readData <- function(directory) {
-# Read raw data
+readData <- function (directory) {
+# This function reads NOAA weather data from the disk.
+#
+# Input:  The directory containing the file of weather data.
+# Output: A data frame containing the severe weather data set.
+    
+    cwd <- getwd()
     setwd("/Users/mgast/Dropbox/data-science-specialization/5-reproducible-research/RepData-StormProject")
     raw.df <- read.csv("repdata-data-StormData.csv")
+    setwd(cwd)
     raw.df 
 }
 
-loadPackages <- function() {
-# Load packages
-    library(ggplot2)
-    library(dplyr)
-    library(foreach)
-}
 
 countNAs <- function (df) {
-# Count NAs in a package to see how many of them there are.
+# This function counts the number of NAs in a data frame per column, and returns the columns that
+# have non-zero numbers of NAs.
+#
+# Input:  A data frame
+# Output: A list of column names and the NA count in each column.  No output is printed.
+
     count.na <- as.data.frame(colSums(is.na(df)))
     names(count.na) <- c("count")
 
-    #only print names of columns with NAs in them
+    # Only return columns that have NAs, filter out zero columns.
     count.na <- subset(count.na, count>0)
     count.na
 }
 
 exponentTranslator <- function (exp) {
-# Translate an exponent to a power of 10.
+#
+#    Translate an exponent to a power of 10.
+#
+# Input:  A text exponent character.  The text may be a number 0-9, the
+#         letter H for hundred, K for thousand, M for million, or B for
+#         billion.
+# Output: A numeric exponent.  The number is either the text number
+#         given as input, 2 for hundreds, 3 for thousands, 6 for million,
+#         9 for billion, and the number 1 in the case of any other
+#         character.
     
     exp <- as.character(exp)
     if (exp %in% c("0","1","2","3","4","5","6","7","8","9")) {
         return(as.numeric(exp))
+    }
+    if (exp %in% c("h","H")) {
+        return(2)
     }
     if (exp %in% c("k","K")) {
         return(3)
@@ -39,9 +67,6 @@ exponentTranslator <- function (exp) {
     }
     if (exp %in% c("b","B")) {
         return(9)
-    }
-    if (exp %in% c("h","H")) {
-        return(2)
     }
     if (exp == "?") {
         return(1)
@@ -54,85 +79,81 @@ exponentTranslator <- function (exp) {
 }
 
 
-
-
-# three of the top events are the same! (TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS)
-
-# Print out the top num events in the data frame
 topEvents <- function (df, num) {
-    # prints top events
+# This function prints out the top N events in a data frame.
+#
+# Input:  A data frame and number are given as input.
+# Output: A data frame is returned with the specified number
+#         of top events.  The determination of a top event
+#         is made purely by the number of occurrences, not
+#         the effects of any of the events.
+
     if (missing(num)) {
         num <- 10
     }
-    evtype.table <- table(df$EVTYPE)
-    head(sort(evtype.table,decreasing=TRUE),n=num)
+    evtype.table <- table(df$event)
+    rt.df <- head(sort(evtype.table,decreasing=TRUE),n=num)
+    rt.df
 }
 
-# Put two together
-eventMerge <- function (df, newEventName, oldEventName) {
-    # In df, rewrites all "matchEvents" to "newEvents"
-    # usage: eventMerge(storm.data, "TSTM WIND", "THUNDERSTORM"
-    message(paste("merging",oldEventName,"into",newEventName))
-    df[df$EVTYPE == oldEventName,]$EVTYPE <- newEventName
-    df
-}
+# three of the top events are the same! (TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS)
 
 mergeEvents <- function (df, newEvent, ...  ) {
+    
+# This function combines many event types together.  The motivation
+# for the function is that there are often events with slightly
+# different text names that mean exactly the same thing.  In the NOAA
+# data set, the names TSTM WIND, THUNDERSTORM WIND, and THUNDERSTORM
+# WINDS all refer to the same event, but are counted separately.
+#
+# Input:  A data frame to combine elements in, a new event name to
+#         consolidate in to, and a list of events to consolidate.
+# Output: A data frame with all specified events at the end of the
+#         argument list rewritten as the second argument.
+
+    # Get event list for rewriting
     oldEvents <- c(...)
+
+    # Rewrite each event in turn
     for (i in 1:length(oldEvents)) {
-        count <- nrow(df[df$EVTYPE == oldEvents[i],]$EVTYPE)
-        message(count)
+        count <- nrow(df[df$event == oldEvents[i],])
         if (count > 0) {
-            message(paste("Merging",count,oldEvents[i],"into",newEvent))
-            df[df$EVTYPE == oldEvents[i],]$EVTYPE <- newEvent
+            df[df$event == oldEvents[i],]$event <- newEvent
         } else {
-              message(paste("No events of type",oldEvents[i],"to merge into",newEvent))
+              message(paste("Warning: No events of type",
+                            oldEvents[i],"to merge into",
+                            newEvent))
           }
     }
     df
 }
-                 
 
+billions <- function (number) {
+# This function returns the number of billions in a specified number.
+#
+# Input:   A number.
+# Output:  The number of billions represented by the input number.
+    return(round(number/1000000000,1))
+}
 
-storm.propdmg <- aggregate(propertyDamage ~ EVTYPE,data=storm.data,FUN=sum)
-storm.cropdmg <- aggregate(cropDamage ~ EVTYPE,data=storm.data,FUN=sum)
-storm.die <- aggregate(FATALITIES ~ EVTYPE,data=storm.data, FUN=sum)
-storm.wound <- aggregate(INJURIES ~ EVTYPE,data=storm.data, FUN=sum)
+thousands <- function (number) {
+# This function returns the number of thousands in a specified number.
+#
+# Input:   A number.
+# Output:  The number of thousands represented by the input number.
 
-storm.prop.sort <- storm.propdmg[ order(storm.propdmg$propertyDamage,decreasing=TRUE,na.last=TRUE), ]
-storm.crop.sort <- storm.cropdmg[ order(storm.cropdmg$cropDamage,decreasing=TRUE,na.last=TRUE), ]
-storm.die.sort <- storm.die[ order(storm.die$FATALITIES,decreasing=TRUE,na.last=TRUE), ]
-storm.wound.sort <- storm.wound[ order(storm.wound$INJURIES,decreasing=TRUE,na.last=TRUE), ]
+    return(round(number/1000,1))
+}
 
-head(storm.prop.sort)
-head(storm.crop.sort)
-head(storm.die.sort)
-head(storm.wound.sort)
+initialCap <- function(s) {
+# This function converts text from any case into initial capital
+# letters.
+#
+# Input:  A string
+# Output: The same string, but with all words having only the
+#         first letter capitalized.
 
-storm.data <- mutate(storm.data,totalDamage=propertyDamage+cropDamage)
-storm.destruct <- aggregate(. ~ EVTYPE, data=storm.data, FUN=sum)
-storm.destruct.sort <- storm.destruct [ order(storm.destruct$totalDamage, decreasing=TRUE, na.last=TRUE),]
-head(storm.destruct.sort)
-
-> head(storm.destruct.sort,n=20)
-                EVTYPE FATALITIES INJURIES propertyDamage  cropDamage    totalDamage
-138        FLASH FLOOD        978     1777 68202366963580  1421317100 68203788280680
-711 THUNDERSTORM WINDS         64      908 20865316766860   190734780 20865507501640
-758            TORNADO       5633    91346  1078950511110   415113110  1079365624220
-212               HAIL         15     1361   315755837790  3025974480   318781812270
-418          LIGHTNING        816     5230   172943309310    12092090   172955401400
-154              FLOOD        470     6789   144657709870  5661968450   150319678320
-372  HURRICANE/TYPHOON         64     1275    69305840000  2607872800    71913712800
-168           FLOODING          6        2    59208255000     8855500    59217110500
-599        STORM SURGE         13       38    43323536000        5000    43323541000
-274         HEAVY SNOW        127     1021    17932589140   134653100    18067242240
-84             DROUGHT          0        4     1046106000 13972566000    15018672000
-363          HURRICANE         61       46    11868319010  2741910000    14610229010
-529        RIVER FLOOD          2        2     5118945500  5029459000    10148404500
-387          ICE STORM         89     1975     3949927810  5022113500     8972041310
-772     TROPICAL STORM         58      340     7703890550   678346000     8382236550
-888       WINTER STORM        206     1321     6688597250    26944000     6715541250
-320          HIGH WIND        248     1137     5270046610   638571300     5908617910
-875           WILDFIRE         75      911     4765114000   295472800     5060586800
-779          TSTM WIND        504     6957     4490458440   554007350     5044465790
-600   STORM SURGE/TIDE         11        5     4641188000      850000     4642038000
+    words <- strsplit(s, " ")[[1]]
+    paste(toupper(substring(words, 1,1)), tolower(substring(words, 2)),
+      sep="", collapse=" ")
+}
