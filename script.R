@@ -7,6 +7,7 @@ loadPackages <- function() {
     library(ggplot2)
     library(dplyr)
     library(gridExtra)
+    library(scales)
     library(reshape2)
     require(RColorBrewer)
 }
