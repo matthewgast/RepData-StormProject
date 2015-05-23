@@ -1,7 +1,7 @@
 ---
 title: 'Economic and Human Consequences of Storms: An Analysis of NOAA Storm Data'
 author: "Matthew Gast"
-date: "May 22, 2015"
+date: "May 2015"
 output:
   html_document:
     fig_caption: yes
@@ -31,7 +31,7 @@ the late summer and fall (August through October).
 # Data Processing
 
 Before performing the analysis, the relevant data was loaded and
-preprocessed.  All code that supports this document is found in the
+preprocessed.  All code that supports this document may be found in the
 [Github repository](https://github.com/matthewgast/RepData-StormProject) for
 the project.  To improve the readability of this paper, many repetitive tasks have been turned into functions, and links to the full code will be available at GitHub.
 
@@ -67,11 +67,11 @@ names(storm.data.raw)
 
 For the purpose of this analysis, we care about the following fields:
 
-- EVTYPE: The type of weather event, such as a drought, flood, or tornado.
-- BGN_DATE: The date at which a particular weather event began.  This field is used to study the seasonality of weather events.
-- FATALITIES and INJURIES: together, these two fields give us an indication of the total human cost of storm events.  In this analysis, they will be combined into a single "casualty" number.
-- PROPDMG and PROPDMGEXP: The data set expresses property damage as the combination of a number and an exponent.  For example, US$25,000 is expressed as a value of 25 and an exponent of "K" for thousand.
-- CROPDMG and CROPDMGEXP: Crop damage is expressed in the same manner as property damage.
+- `EVTYPE`: The type of weather event, such as a drought, flood, or tornado.
+- `BGN_DATE`: The date at which a particular weather event began.  This field is used to study the seasonality of weather events.
+- `FATALITIES` and `INJURIES`: together, these two fields give us an indication of the total human cost of storm events.  In this analysis, they will be combined into a single "casualty" number.
+- `PROPDMG` and `PROPDMGEXP`: The data set expresses property damage as the combination of a number and an exponent.  For example, US$25,000 is expressed as a value of 25 and an exponent of "K" for thousand.
+- `CROPDMG` and `CROPDMGEXP`: Crop damage is expressed in the same manner as property damage.
 
 With a large amount of data, it is important to assess how much of the
 data is present.  Most of the data fields in the data set are full,
@@ -82,11 +82,8 @@ analysis.
 countNAs (storm.data.raw)
 ```
 
-After deciding which fields are relevant to the 
-
-With the determination of the fields that matter, filter out the data
-relevant to the analysis.  Fields that are final data will be renamed
-in lower case, with raw data fields needing processing retaining their
+After deciding which fields are relevant to the analysis, select only the columns needed.  Fields that are final data are renamed
+in lower case, while raw data fields that require further processing retain their
 upper case names.  The event type, the number of deaths, and the
 number of injuries are all in their final form.  The date field and
 economic damages need further processing.
@@ -99,17 +96,17 @@ names(storm.data) <- c("event","BGN_DATE","deaths","injuries","PROPDMG",
 
 ## Extracting date information
 
-The BGN_DATE field consists of a day and time at which each individual
+The `BGN_DATE` field consists of a day and time at which each individual
 weather event began.  For the purpose of seasonal or time series
 analysis, only the month and year matter, so extract them from the
-data using the date manipulation fields.
+data using the date manipulation fields.  The data range can be inferred by looking at the earliest and latest storm years.
 
 ```{r extract_dates}
 storm.data$month <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%m"))
 storm.data$year <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%Y"))
+min(storm.data$year)
+max(storm.data$year)
 ```
-
-XXX - look at years of data
 
 ## Economic damage fields
 
@@ -134,18 +131,19 @@ subset(storm.data,PROPDMGEXP %in% c("-","+","?"))
 subset(storm.data,CROPDMGEXP %in% c("-","+","?"))
 ```
 
+A few exponent fields are even a number.  The code book does not describe the values that should be attributed to a number, so this analysis takes the number as the exponent to a power of 10.  That is, a "3" in the exponent field means to multiply the value by 10^3.
+
 With the help of a support function to translate an exponent character
 into the power of 10 on a muliplier, we can convert the exponents into
 numeric values.  By comparing the levels of the fields in the raw data
-(PROPDMGEXP and CROPDMGEXP) to their translated counterparts
-(propExponent and cropExponent), it is possible to get an idea of the
+(`PROPDMGEXP` and `CROPDMGEXP`) to their translated counterparts
+(`propExponent` and `cropExponent`), it is possible to get an idea of the
 magnitude of the impact of severe weather.  Property damage events
-with billions of dollars in damage are significantly more common, and
-more events damage property than crops.  By comparison, the original
+with billions of dollars in damage are significantly more common than high-value crop damage events.
+
+It is also possible to see that the original
 raw data fields were translated correctly.  For example, in property
-damage, there are 11,330 events in the "M"illon range, 7 events in the
-"m"illion range, and 4 events that use an exponent of 10^6, or,
-million.  When translated, there are 11,341 events that have the
+damage, there are 11,330 events with an exponent of "M", 7 events with an exponent of "m", and 4 events that use an exponent of "6".  All of these exponents translate to millions of dollars.  When translated, there are 11,341 events that have the
 exponent of 10^6, which matches identically.
 
 ```{r translate_exponents, cache=TRUE}
@@ -180,7 +178,7 @@ sum(name.contains.tstorm)
 length(unique(storm.data[name.contains.tstorm,]$event))
 ```
 
-To shrink the event types to a manageable size, we begin by converting all text to upper case to avoid case mismatches.  The function `topEvents` prints out the top 10 events and the number of times they appear in the database.  Three of the top 10 events have essentially identical descriptors: "TSTM WIND", "THUNDERSTORM WIND", and "THUNDERSTORM WINDS".
+To shrink the event types to a manageable size, we begin by converting all text to upper case to avoid case mismatches between otherwise identical events.  The function `topEvents` prints out the top 10 events and the number of times they appear in the database.  Three of the top 10 events have essentially identical descriptors: "TSTM WIND", "THUNDERSTORM WIND", and "THUNDERSTORM WINDS".
 
 ```{r uppercase_event_strings}
 storm.data$event <- toupper(storm.data$event)
@@ -190,7 +188,8 @@ topEvents(storm.data,10)
 After inspecting the event names, several combinations to the data are
 made.  there are over 900 event names in the database, the combination
 process is quite repetitive.  In this document, it is carried out by
-the function `simplifyEvents`, which is available in the GitHub repository.  As
+the function `simplifyEvents`, which is [available in the GitHub repository](https://github.com/matthewgast/RepData-StormProject/blob/master/simplifyEvents.R).
+As
 a result of the simplification, events related to rain and winter
 weather appear in the top 10 event types, and a substantial reduction
 in the number of unique event types is achieved.
@@ -210,6 +209,52 @@ types to have an initial capital letter in each word.
 storm.data$event <- sapply(storm.data$event, initialCap)
 ```
 
+## Selecting a year
+
+Modern events are supposed to be more complete.  So let's look at that.  In the 1950s through the 1980s, the events are low.  It is only later on that the number of events keeps pace and some event types are measured.
+
+Add a count field so that the aggregate function can sum up.
+
+```{r count_events_by_year}
+storm.data.ctr <- mutate(storm.data,count=1)
+event.count <- aggregate(. ~ event+year,data=storm.data.ctr,FUN=sum)
+event.count <- select(event.count,event,year,count)
+
+total.events <- aggregate(.~event, data=event.count,FUN=sum)
+top10.events <- head(arrange(total.events,desc(count)),n=10)
+top10.eventnames <- top10.events$event
+top10events.by.year <- filter(event.count,event %in% top10.eventnames)
+```
+
+```{r graph_events_by_year}
+eventcount.base.g <- ggplot(top10events.by.year, aes(x = year,
+    	       y = count,
+			       fill=event)) +
+     geom_bar(stat='identity') +
+     xlab("year") +
+     theme(axis.text.x = element_text(angle=45, hjust=1)) +
+     ylab("Number of events (thousands)") +
+     scale_y_continuous(labels=thousands) +
+     ggtitle("Weather events per year") +
+     labs(fill = "Event type")
+
+eventcount.g <- eventcount.base.g + geom_vline(aes(xintercept=1993))
+
+eventcount.modern.g <- eventcount.base.g + scale_x_continuous(limits=c(1992,2011))
+
+grid.arrange(eventcount.g,eventcount.modern.g,ncol=2)
+
+```
+
+Based on the second graph, we keep only data from 1993 and later.  And in fact, it's still most of the data!
+
+
+```{r keep_only_late_data}
+storm.data <- filter(storm.data,year>=1993)
+dim(storm.data)
+```
+
+
 ## Final data processing
 
 The final steps in data processing are to drop extraneous columns of
@@ -226,8 +271,7 @@ storm.data <- mutate(storm.data,
 storm.data = storm.data %>% select(event,year,month,propertyDamage,cropDamage,totalDamage,deaths,injuries,casualties)
 ```
 
-The final bit of data processing is to create a second array that
-holds data on the effects of each event type.  When aggregating
+As an auxiliary bit of data, a second data frame is created that aggregates the effects of each type of weather event.  When aggregating
 events, we only wish to aggregate economic damage and casualty data,
 and it does not make sense to aggregate month and year numbers.
 
@@ -242,11 +286,79 @@ effect.by.event <- aggregate (cbind(propertyDamage,
 			       FUN=sum)
 ```
 
+
 # Research Question 1: Human Effect of Events 
 
 This section of the paper answers the question: *Across the United
 States, which types of events (as indicated in the EVTYPE variable)
 are most harmful with respect to population health?*
+
+To answer this question, this section of the paper graphs casualty by storm type, but only for the top ten severe weather event types, as measured by casualties.  Tornados are dominant in this category, with almost ten times the casualties as the next highest event type.  Finally, this paper analyzes the seasonal effects of different types of weather events.
+
+To generate the graphs for this section, the analysis begins by selecting the top ten even types by number of casualties, and then using the `melt` function to transform the "wide" data into "long" data because the long form is more suitable for plotting.  Because the tornado event type is dominant, a second plot is added to the panel, labeled "non-tornado casualties" to better illustrate the relationship of the second through tenth cause of casualties.  For readability, the casualty axis in these plots is scaled by the `thousands` function in `storm-data-support-functions.R`.
+
+
+```{r casualty_graphs}
+casualties.by.event <- head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=10)
+top10.casualty.event <- casualties.by.event$event
+long.format.casualties <- melt(casualties.by.event)
+casualties.g <- ggplot(long.format.casualties, aes(x = event,
+			       y = value,
+			       fill=variable)) +
+     geom_bar(stat='identity') +
+     xlab("Type of event") +
+     theme(axis.text.x = element_text(angle=45, hjust=1)) +
+     ylab("Casualties (thousands)") +
+     scale_y_continuous(labels=thousands) +
+     ggtitle("Severe Weather Casualties") +
+     scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
+                      ) +
+     labs(fill = "Casualty Type")
+
+nontornado.casualties <- tail(head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=10),n=9)
+long.format.nontornado.casualties <- melt(nontornado.casualties)
+nontornado.casualties.g <- ggplot(long.format.nontornado.casualties, aes(x = event,
+  		       y = value,
+			       fill=variable)) +
+     geom_bar(stat='identity') +
+     xlab("Type of event") +
+     theme(axis.text.x = element_text(angle=45, hjust=1)) +
+     ylab("Casualties (thousands)") +
+     scale_y_continuous(labels=thousands) +
+     ggtitle("Non-Tornado Casualties") +
+     scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
+                      ) +
+     labs(fill = "Casualty Type")
+```
+
+Many types of severe weather are seasonal.  To search out the flow of 
+
+``` {r seasonal_casualty_graph}
+monthly.top10.casualties <- filter(storm.data,event %in% top10.casualty.event)
+monthly.casualties <- aggregate (. ~ event+month,data=monthly.top10.casualties,FUN=sum)
+casualty.seasons.g <- ggplot(monthly.casualties,aes(
+				x=reorder(month.name[month],month),
+				y=casualties,
+				fill=event)
+			     ) +
+       geom_bar(stat='identity') + 
+       theme(legend.title=element_blank(),
+             axis.text.x=element_text(angle=45, hjust=1)
+             ) +
+       xlab("Month") +
+       ylab("Casualties (thousands)") +
+       scale_y_continuous(labels=thousands) +
+       labs(fill="Weather Type") +
+       ggtitle("Weather Casualty Seasonality")
+```
+
+```{r}
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(casualties.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
+print(nontornado.casualties.g,vp=viewport(layout.pos.row=2,layout.pos.col=1))
+print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
+```
 
 By far, the most dangerous weather events are tornados, with nearly
 ten times the casualties of the next event type, as readily seen in
@@ -268,74 +380,6 @@ prominently in the summer, and floods happen mostly in the fall.
 Depending on the type of severe weather expected, emergency management
 agencies may need to be ready at different times of year.
 
-To obtain the graphs in the panel below, the raw data was summarized
-by event type.  This paper combines deaths and injuries into a single
-casualty measurement, and produced graphs containing only the top 10
-casualty-causing events.  Plotting both deaths and injuries on the
-same scale was facilitated by using the `melt` function to reformat
-the data to be more compatible with plotting functions.  Seasonal
-graphs were obtained by summarizing results by month over the course
-of the entire data set.
-
-```{r graph_casualties}
-casualties.by.event <- head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=10)
-top10.casualty.event <- casualties.by.event$event
-long.format.casualties <- melt(casualties.by.event)
-casualties.g <- ggplot(long.format.casualties, aes(x = event,
-			       y = value,
-			       fill=variable)) +
-     geom_bar(stat='identity') +
-     xlab("Type of event") +
-     theme(axis.text.x = element_text(angle=45, hjust=1)) +
-     ylab("Casualties (thousands)") +
-     scale_y_continuous(labels=thousands) +
-     ggtitle("Severe Weather Casualties") +
-     scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
-                      ) +
-     labs(fill = "Casualty Type")
-
-nontornado.casualties <- tail(head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=11),n=10)
-nontornado.casualty.events <- nontornado.casualties$event
-long.format.nontornado.casualties <- melt(nontornado.casualties)
-nontornado.casualties.g <- ggplot(long.format.nontornado.casualties, aes(x = event,
-  		       y = value,
-			       fill=variable)) +
-     geom_bar(stat='identity') +
-     xlab("Type of event") +
-     theme(axis.text.x = element_text(angle=45, hjust=1)) +
-     ylab("Casualties (thousands)") +
-     scale_y_continuous(labels=thousands) +
-     ggtitle("Non-Tornado Casualties") +
-     scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
-                      ) +
-     labs(fill = "Casualty Type")
-
-
-monthly.top10.casualties <- filter(storm.data,event %in% top10.casualty.event)
-monthly.casualties <- aggregate (. ~ event+month,data=monthly.top10.casualties,FUN=sum)
-casualty.seasons.g <- ggplot(monthly.casualties,aes(
-				x=reorder(month.name[month],month),
-				y=casualties,
-				fill=event)
-			     ) +
-       geom_bar(stat='identity') + 
-       theme(legend.title=element_blank(),
-             axis.text.x=element_text(angle=45, hjust=1)
-             ) +
-       xlab("Month") +
-       ylab("Casualties (thousands)") +
-       scale_y_continuous(labels=thousands) +
-       labs(fill="Weather Type") +
-       ggtitle("Weather Casualty Seasonality")
-
-#grid.arrange(casualties.g,casualty.seasons.g,ncol=1)
-
-grid.newpage()
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(casualties.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
-print(nontornado.casualties.g,vp=viewport(layout.pos.row=2,layout.pos.col=1))
-print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
-```
 
 # Research Question 2: Economic Consequences of Weather
 
