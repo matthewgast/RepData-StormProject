@@ -12,35 +12,48 @@ output:
 
 # Synopsis
 
-Severe weather affects the population both through direct harm to individuals in the population, as well as by inflicting economic damage by harm to both property and crops.  This paper analyzes data collected by the National Oceanographic and Atmospheric Administration (NOAA) to assess the harm from severe weather in the United States.
+Severe weather affects the population both through direct harm to
+individuals in the population, as well as by inflicting economic
+damage by harm to both property and crops.  This paper analyzes data
+collected by the National Oceanographic and Atmospheric Administration
+(NOAA) to assess the harm from severe weather in the United States.
 
-Population harm is measured by casualties, which consist of both deaths and injuries.  The most dangerous weather event to people is tornados, followed by heat-related weather.  Severe weather events have seasonal patterns, with tornados doing the most harm to the population
-in the spring (April), heat-related weather doing the most harm in the
-summer (July), and flooding doing the most harm in the fall (October).
+Population harm is measured by casualties, which consist of both
+deaths and injuries.  The most dangerous weather event to people is
+tornados, followed by heat-related weather.  Severe weather events
+have seasonal patterns, with tornados doing the most harm to the
+population in the spring (April), heat-related weather doing the most
+harm in the summer (July), and flooding doing the most harm in the
+fall (October).
 
 The economic consequences of severe weather come from both damage to
-property and damage to crops, with most of the total
-economic damage coming from property damage.  The main source of crop
-damage is drought, followed by floods and hurricanes.  Severe weather events have seasonal patterns as well, with crop damage peaking late during the growing season from June through September.
-Property damage is done
-mainly by floods, with significant contributions from hurricanes and
-tornados.  Flood damage is concentrated in January, with tornado
+property and damage to crops, with most of the total economic damage
+coming from property damage.  The main source of crop damage is
+drought, followed by floods and hurricanes.  Severe weather events
+have seasonal patterns as well, with crop damage peaking late during
+the growing season from June through September.  Property damage is
+done mainly by floods, with significant contributions from hurricanes
+and tornados.  Flood damage is concentrated in January, with tornado
 damages coming in the spring (April and May), and hurricane damage in
 the late summer and fall (August through October).
 
 # Data Processing
 
 Before performing the analysis, the relevant data was loaded and
-preprocessed.  All code that supports this document may be found in the
-[Github repository](https://github.com/matthewgast/RepData-StormProject) for
-the project.  To improve the readability of this paper, many repetitive tasks have been turned into functions, and links to the full code will be available at GitHub.
+preprocessed.  All code that supports this document may be found in
+the [Github
+repository](https://github.com/matthewgast/RepData-StormProject) for
+the project.  To improve the readability of this paper, many
+repetitive tasks have been turned into functions, and links to the
+full code will be available at GitHub.
 
-1.  Environment setup
+1. Environment setup
 
 Several support functions are used in this document, and are contained
-in the file [script.R](https://github.com/matthewgast/RepData-StormProject/blob/master/script.R).
-Therefore, to set up the environment, the
-support code is loaded.  This paper makes use of several R packages to support the analysis in the document.
+in the file [storm-data-support-functions.R](https://github.com/matthewgast/RepData-StormProject/blob/master/storm-data-support-functions.R).
+Therefore, to set up the environment, the support code is loaded.
+This paper makes use of several R packages to support the analysis in
+the document, which are loaded by the `loadPackages()` function.
 
 ```{r setup_environment}
 source("storm-data-support-functions.R")
@@ -49,9 +62,12 @@ loadPackages()
 
 2.  Read data and assess data quality
 
-With the environment set up, data is read by a support function called `readData()`.  The
-support function reads in the data, but performs no processing.  When
-complete, the raw data comprises over 900,000 weather events, as seen by the `dim()` function.
+With the environment set up, data is read by a support function called
+`readData()`.  The support function reads in the data from the current
+working directory on disk, but performs no processing and simply
+returns a data frame with the raw data.  When complete, the raw data
+comprises over 900,000 weather events, as seen by the `dim()`
+function.
 
 ```{r read_data, cache=TRUE}
 storm.data.raw <- readData()
@@ -82,11 +98,13 @@ analysis.
 countNAs (storm.data.raw)
 ```
 
-After deciding which fields are relevant to the analysis, select only the columns needed.  Fields that are final data are renamed
-in lower case, while raw data fields that require further processing retain their
-upper case names.  The event type, the number of deaths, and the
-number of injuries are all in their final form.  The date field and
-economic damages need further processing.
+After deciding which fields are relevant to the analysis, select only
+the columns needed.  The EVTYPE, FATALITIES, and INJURIES field are
+all in their final form, and therefore, the column names are converted
+to lower case letters.  The remaining fields require further
+processing in order to assume their final form.  As a hint to the
+state of the analysis, fields requiring further processing will retain
+their all-capitalized field names.
 
 ```{r select_data_fields}
 storm.data <- select(storm.data.raw,EVTYPE,BGN_DATE,FATALITIES,INJURIES,PROPDMG,PROPDMGEXP,CROPDMG,CROPDMGEXP)
@@ -94,12 +112,16 @@ names(storm.data) <- c("event","BGN_DATE","deaths","injuries","PROPDMG",
 		  "PROPDMGEXP","CROPDMG","CROPDMGEXP")
 ```
 
-## Extracting date information
+3. Extracting date information
 
-The `BGN_DATE` field consists of a day and time at which each individual
-weather event began.  For the purpose of seasonal or time series
-analysis, only the month and year matter, so extract them from the
-data using the date manipulation fields.  The data range can be inferred by looking at the earliest and latest storm years.
+To continue with the analysis, the `BGN_DATE` field will be processed.
+The field consists of a day and time at which each individual weather
+event began.  For the purpose of seasonal or time series analysis,
+only the month and year matter, so extract them from the data using
+the date manipulation functions.
+
+The range of time covered by the dataset may be given by looking at
+the `min()` and `max()` year in the date range.
 
 ```{r extract_dates}
 storm.data$month <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%m"))
@@ -108,43 +130,66 @@ min(storm.data$year)
 max(storm.data$year)
 ```
 
-## Economic damage fields
+4. Economic damage fields
 
-The basic approach to assessing economic damage is to transform the
-damage and exponent field into a single number.  The damages are expressed as a value plus an exponent, but the value of the exponent field is sometimes a number and sometimes a letter:
+The economic damage fields are split into two parts: a number and an
+exponent.  Taken together, they describe the damage.  To work with the
+economic damage fields, we will need to transform them into a single
+number describing the damage.  Begin by looking at the values of the
+exponent fields.  Sometimes, the exponent is a number, sometimes is it
+a letter, and very occasionally, it is another character entirely.
+The `levels()` function will print out a list of all the values a
+column takes on to show what kinds of information is contained in the
+field.
 
 ```{r print_exponent_levels}
 levels(storm.data$PROPDMGEXP)
 levels(storm.data$CROPDMGEXP)
 ```
 
-The numerical exponent values are straightforward.  Letters have
-well-understood meanings: K for thousand, M for million, and B for
-billion.  However, some exponent fields are blank, have a dash, or
-question mark.  To determine whether these values will throw off the
-analysis, we can look and see how many times these values occur.  Only
-a total of about 20 events have missing exponents, and account for
-only a few thousand dollars of damage out of a total of billions.
+According to the code book for the data, the exponent fields should be
+alphabetic, using the letters K for thousand, M for million, and B for
+billion.  In addition to these expected values, there are also
+numbers, many blank fields, and the use of dashes, plus signs, and
+question marks.  This analysis assumes that if the exponent field is
+blank, it means the damage value field needs no further
+multiplication.  To consider whether the remaining text values will
+affect the analysis, it is possible to look at how often they occur.
+As it turns out, very few events use exponents that are dash, plus, or
+question mark.
 
 ```{r show_weird_exponents}
-subset(storm.data,PROPDMGEXP %in% c("-","+","?"))
-subset(storm.data,CROPDMGEXP %in% c("-","+","?"))
+select(subset(storm.data,PROPDMGEXP %in% c("-","+","?")),event,month,year,PROPDMG,PROPDMGEXP)
+select(subset(storm.data,CROPDMGEXP %in% c("-","+","?")),event,month,year,CROPDMG,CROPDMGEXP)
 ```
 
-A few exponent fields are even a number.  The code book does not describe the values that should be attributed to a number, so this analysis takes the number as the exponent to a power of 10.  That is, a "3" in the exponent field means to multiply the value by 10^3.
+A few exponent fields are even a number.  The code book does not
+describe the values that should be attributed to a number, so this
+analysis takes the number as the exponent to a power of 10.  That is,
+a "3" in the exponent field means to multiply the value by 10^3, which
+is equivalent to treating the exponent as a "K".
 
-With the help of a support function to translate an exponent character
-into the power of 10 on a muliplier, we can convert the exponents into
-numeric values.  By comparing the levels of the fields in the raw data
-(`PROPDMGEXP` and `CROPDMGEXP`) to their translated counterparts
-(`propExponent` and `cropExponent`), it is possible to get an idea of the
-magnitude of the impact of severe weather.  Property damage events
-with billions of dollars in damage are significantly more common than high-value crop damage events.
+The `exponentTranslator()` function is used to translate the exponent
+character into a numeric power of 10.  If given a number, it returns
+that number.  If given a K for thousands, it returns 3.  If it is
+given an M for millions, it returns 6.  If given a B for billions, it
+returns 9.  There are a few cases where there is an H for hundreds,
+and the function returns 2.  All other values cause the function to
+return a 1.
 
-It is also possible to see that the original
-raw data fields were translated correctly.  For example, in property
-damage, there are 11,330 events with an exponent of "M", 7 events with an exponent of "m", and 4 events that use an exponent of "6".  All of these exponents translate to millions of dollars.  When translated, there are 11,341 events that have the
-exponent of 10^6, which matches identically.
+To translate the raw data (`PROPDMGEXP` and `CROPDMGEXP`) into
+numerical values (`propExponent` and `cropExponent`), simply apply the
+`exponentTranslator()` function to the raw data.  After conversion,
+compare the values in the raw data to the translated data to ensure
+that the fields are translated correctly.  For example, in property
+damage, there are 11,330 events with an exponent of "M", 7 events with
+an exponent of "m", and 4 events that use an exponent of "6".  All of
+these exponents translate to millions of dollars.  When translated,
+there are 11,341 events that have the exponent of 10^6, which matches
+identically.  While looking at the tables of exponent values, it is
+possible to get an idea of the magnitude of the impact of severe
+weather.  Property damage events with billions of dollars in damage
+are significantly more common than high-value crop damage events.
 
 ```{r translate_exponents, cache=TRUE}
 propExponent <- mapply(exponentTranslator,storm.data$PROPDMGEXP)
@@ -155,7 +200,8 @@ table (storm.data$CROPDMGEXP)
 table(cropExponent)
 ```
 
-With exponents now available in numeric form, translate the damage value and exponents into total damage fields.
+With exponents now available in numeric form, translate the damage
+value and exponents into total damage fields.
 
 ```{r calculate_damage}
 storm.data <- cbind(storm.data,propExponent,cropExponent)
@@ -163,7 +209,7 @@ storm.data <- mutate(storm.data,propertyDamage=PROPDMG*10^propExponent,
                      cropDamage=CROPDMG*10^cropExponent)
 ```
 
-## Event simplification
+5. Event simplification
 
 The coding of events in the storm data is somewhat haphazard.  There
 are 985 event types, but a casual inspection reveals many
@@ -178,7 +224,12 @@ sum(name.contains.tstorm)
 length(unique(storm.data[name.contains.tstorm,]$event))
 ```
 
-To shrink the event types to a manageable size, we begin by converting all text to upper case to avoid case mismatches between otherwise identical events.  The function `topEvents` prints out the top 10 events and the number of times they appear in the database.  Three of the top 10 events have essentially identical descriptors: "TSTM WIND", "THUNDERSTORM WIND", and "THUNDERSTORM WINDS".
+To shrink the event types to a manageable size, we begin by converting
+all text to upper case to avoid case mismatches between otherwise
+identical events.  The function `topEvents` prints out the top 10
+events and the number of times they appear in the database.  Three of
+the top 10 events have essentially identical descriptors: "TSTM WIND",
+"THUNDERSTORM WIND", and "THUNDERSTORM WINDS".
 
 ```{r uppercase_event_strings}
 storm.data$event <- toupper(storm.data$event)
@@ -187,12 +238,20 @@ topEvents(storm.data,10)
 
 After inspecting the event names, several combinations to the data are
 made.  there are over 900 event names in the database, the combination
-process is quite repetitive.  In this document, it is carried out by
-the function `simplifyEvents`, which is [available in the GitHub repository](https://github.com/matthewgast/RepData-StormProject/blob/master/simplifyEvents.R).
-As
-a result of the simplification, events related to rain and winter
-weather appear in the top 10 event types, and a substantial reduction
-in the number of unique event types is achieved.
+process is quite repetitive.  The function `mergeEvents()` is defined
+to combine several types of events together.  As arguments, it takes
+the data frame, a new container event, and the list of events that
+shoudl be written into the new container event.  It is defined in the
+[storm-data-support-functions.R](https://github.com/matthewgast/RepData-StormProject/blob/master/storm-data-support-functions.R).
+To merge together the events for the purpose of analysis, this paper
+defines the function `simplifyEvents`, which is [available in the
+GitHub
+repository](https://github.com/matthewgast/RepData-StormProject/blob/master/simplifyEvents.R).
+`simplifyEvents()` is a function that repeatedly calls `mergeEvents()`
+to consolidate event types.  As a result of the simplification, events
+related to rain and winter weather appear in the top 10 event types,
+and a substantial reduction in the number of unique event types is
+achieved.
 
 ```{r simplify_event_strings, cache=TRUE}
 source("simplifyEvents.R")
@@ -209,9 +268,20 @@ types to have an initial capital letter in each word.
 storm.data$event <- sapply(storm.data$event, initialCap)
 ```
 
-## Selecting a subset of years
+6. Selecting a subset of years
 
-The code book describing the data states that data is more complete in later years.  As a rudimentary assessment of data completeness, the first plot will examine types of weather events in the data set.  To count up the types of events, a column is added to the storm data set so that when data is aggregated with the `sum` function, it will count the number of events that are aggregated together.  This basic analysis focuses on the ten most common types of events in the data set, which include flash floods, floods, hail, lightning, rain, snow, thunderstorm winds, tornados, wind, and winter weather.
+The code book describing the data states that data is more complete in
+later years.  As a rudimentary assessment of data completeness,
+consider the types of severe weather events defined over time.  To get
+a graphical representation of the data, first plot the top severe
+weather events over the life of the data set to determine if there is
+a subset of data that makes sense to study intensively.  To count up
+the types of events, a column is added to the storm data set so that
+when data is aggregated with the `sum` function, it will count the
+number of events that are aggregated together.  This basic analysis
+focuses on the ten most common types of events in the data set, which
+include flash floods, floods, hail, lightning, rain, snow,
+thunderstorm winds, tornados, wind, and winter weather.
 
 ```{r count_events_by_year}
 storm.data.ctr <- mutate(storm.data,count=1)
@@ -223,9 +293,21 @@ top10.eventnames <- top10.events$event
 top10events.by.year <- filter(event.count,event %in% top10.eventnames)
 ```
 
-To assess the quality of recordkeeping, plot the number of events per year of the major types.  In left panel of the plot, it is apparent that tornado, thunderstorm, and hail data has been collected since the 1950s.  However, starting in the early 1990s, data became much more comprehensive.  This paper divides the data into a "historic" era and a "modern" era in 1993, denoted by a vertical line on the left panel.  The remainder of the analysis is restricted to post-1993 data because it allows for direct comparison between storm types.  If the entire data set were to be used, thunderstorms and tornados would be overrepresented because the historic data has much more data on thunderstorms.  The following panel of plots shows the overall data set with a vertical line in 1993, and then the post-1993 data in the right plot.
+To assess the quality of recordkeeping, plot the number of events per
+year of the major types.  In left panel of the plot, it is apparent
+that tornado, thunderstorm, and hail data has been collected since the
+1950s.  However, starting in the early 1990s, data became much more
+comprehensive.  This paper divides the data into a "historic" era and
+a "modern" era in 1993, denoted by a vertical line on the left panel.
+The remainder of the analysis is restricted to post-1993 data because
+it allows for direct comparison between storm types.  If the entire
+data set were to be used, thunderstorms and tornados would be
+overrepresented because the historic data has much more data on
+thunderstorms.  The following panel of plots shows the overall data
+set with a vertical line in 1993, and then the post-1993 data in the
+right plot.
 
-```{r graph_events_by_year}
+```{r graph_events_by_year, fig.cap="Figure 1: Distribution of annual weather events"}
 eventcount.base.g <- ggplot(top10events.by.year, aes(x = year,
     	       y = count,
 			       fill=event)) +
@@ -236,24 +318,29 @@ eventcount.base.g <- ggplot(top10events.by.year, aes(x = year,
      scale_y_continuous(labels=thousands) +
      scale_x_continuous(breaks=seq(1950,2010,10)) +
      ggtitle("Weather events per year")
-```     
 
-```{r plot_event_graphs, fig.cap="Figure 1: Distribution of annual weather events"}
-eventcount.g <- eventcount.base.g + geom_vline(aes(xintercept=1993)) + guides(fill = FALSE)
-eventcount.modern.g <- eventcount.base.g + scale_x_continuous(limits=c(1993,2011)) + labs(fill = "Event type")
+eventcount.g <- eventcount.base.g +
+                geom_vline(aes(xintercept=1993)) +
+                guides(fill = FALSE)
+
+eventcount.modern.g <- eventcount.base.g +
+                       scale_x_continuous(limits=c(1993,2011)) +
+                       labs(fill = "Event type")
 
 grid.arrange(eventcount.g,eventcount.modern.g,ncol=2)
-
 ```
 
-Based on the right panel plot, this analysis restricts itself to data in 1993 and later, which is still most of the data.  Even after discarding the historical data prior to 1993, almost 80% of the data remain for analysis.
+Based on the right panel plot, this analysis restricts itself to data
+in 1993 and later, which is still most of the data.  Even after
+discarding the historical data prior to 1993, almost 80% of the data
+remain for analysis.
 
 ```{r keep_only_late_data}
 storm.data <- filter(storm.data,year>=1993)
 dim(storm.data)
 ```
 
-## Final data processing
+7. Final data processing
 
 The final steps in data processing are to drop extraneous columns of
 raw data, retaining only the event type, casualty counts, damage
@@ -264,14 +351,24 @@ improve readability.
 ```{r finish_data_processing}
 storm.data <- select(storm.data,event,deaths,injuries,propertyDamage,cropDamage,month,year)
 storm.data <- mutate(storm.data,
-			totalDamage=propertyDamage+cropDamage,
-			casualties=deaths+injuries)
-storm.data = storm.data %>% select(event,year,month,propertyDamage,cropDamage,totalDamage,deaths,injuries,casualties)
+                     totalDamage=propertyDamage+cropDamage,
+                     casualties=deaths+injuries)
+storm.data <- storm.data %>% select(event,
+                                    year,
+                                    month,
+                                    propertyDamage,
+                                    cropDamage,
+                                    totalDamage,
+                                    deaths,
+                                    injuries,
+                                    casualties)
 ```
 
-As an auxiliary summary, a second data frame is created that aggregates the effects of each type of weather event.  When aggregating
-events, we only wish to aggregate economic damage and casualty data,
-and it does not make sense to aggregate month and year numbers.
+As an auxiliary summary, a second data frame is created that
+aggregates the effects of each type of weather event.  When
+aggregating events, we only wish to aggregate economic damage and
+casualty data, and it does not make sense to aggregate month and year
+numbers.
 
 ```{r calculate_effects_by_storm_type}
 effect.by.event <- aggregate (cbind(propertyDamage,
@@ -291,10 +388,22 @@ This section of the paper answers the question: *Across the United
 States, which types of events (as indicated in the EVTYPE variable)
 are most harmful with respect to population health?*
 
-To answer this question, this section of the paper graphs casualty by storm type, but only for the top ten severe weather event types, as measured by casualties.  Tornados are dominant in this category, with almost ten times the casualties as the next highest event type.  Finally, this paper analyzes the seasonal effects of different types of weather events.
+To answer this question, this section of the paper graphs casualty by
+storm type, but only for the top ten severe weather event types, as
+measured by casualties.  Tornados are dominant in this category, with
+almost ten times the casualties as the next highest event type.
+Finally, this paper analyzes the seasonal effects of different types
+of weather events.
 
-To generate the graphs for this section, the analysis begins by selecting the top ten even types by number of casualties, and then using the `melt` function to transform the "wide" data into "long" data because the long form is more suitable for plotting.  Because the tornado event type is dominant, a second plot is added to the panel, labeled "non-tornado casualties" to better illustrate the relationship of the second through tenth cause of casualties.  For readability, the casualty axis in these plots is scaled by the `thousands` function in `storm-data-support-functions.R`.
-
+To generate the graphs for this section, the analysis begins by
+selecting the top ten even types by number of casualties, and then
+using the `melt` function to transform the "wide" data into "long"
+data because the long form is more suitable for plotting.  Because the
+tornado event type is dominant, a second plot is added to the panel,
+labeled "non-tornado casualties" to better illustrate the relationship
+of the second through tenth cause of casualties.  For readability, the
+casualty axis in these plots is scaled by the `thousands` function in
+`storm-data-support-functions.R`.
 
 ```{r casualty_graphs}
 casualties.by.event <- head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=10)
@@ -329,7 +438,11 @@ nontornado.casualties.g <- ggplot(long.format.nontornado.casualties, aes(x = eve
      labs(fill = "Casualty Type")
 ```
 
-Many types of severe weather are seasonal.  To search out the annual patterns, it is possible to sum up casualties on a monthly basis throughout the data set.  To avoid having an unwieldy number of weather causes, this analysis is done only for the top ten events that cause casualties.
+Many types of severe weather are seasonal.  To search out the annual
+patterns, it is possible to sum up casualties on a monthly basis
+throughout the data set.  To avoid having an unwieldy number of
+weather causes, this analysis is done only for the top ten events that
+cause casualties.
 
 ``` {r seasonal_casualty_graph}
 monthly.top10.casualties <- filter(storm.data,event %in% top10.casualty.event)
@@ -350,7 +463,12 @@ casualty.seasons.g <- ggplot(monthly.casualties,aes(
        ggtitle("Weather Casualty Seasonality")
 ```
 
-From the casualty plots, it is apparent that the deadliest event type is heat, though tornados cause many more injuries than heat.  Both floods and flash floods make the list, with flash flooding more likely to kill, though flooding causes many more injuries.  There is a definite seasonal nature to the casualty data, with tornados doing damage in the spring, giving way to heat in the summer.
+From the casualty plots, it is apparent that the deadliest event type
+is heat, though tornados cause many more injuries than heat.  Both
+floods and flash floods make the list, with flash flooding more likely
+to kill, though flooding causes many more injuries.  There is a
+definite seasonal nature to the casualty data, with tornados doing
+damage in the spring, giving way to heat in the summer.
 
 ```{r casualty_panel_plot, fig.cap="Figure 2: Storm-related casualties"}
 grid.newpage()
@@ -362,12 +480,18 @@ print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
 
 # Research Question 2: Economic Consequences of Weather
 
-The research question answered in this section of the paper is: *Across the United States, which types of events have the greatest economic consequences?*
+The research question answered in this section of the paper is:
+*Across the United States, which types of events have the greatest
+economic consequences?*
 
 Economic consequences are divided into damage to property and damage
-to crops.  In the top ten economic damage-causing events, property damage totals $360 billion, while crop damage is only $42 billion.  Of the top ten damage-causing events, only drought causes more damage to crops than property.
+to crops.  In the top ten economic damage-causing events, property
+damage totals $360 billion, while crop damage is only $42 billion.  Of
+the top ten damage-causing events, only drought causes more damage to
+crops than property.
 
-To graph economic damages, the top ten damage-causing events are selected from the data set, transformed by `melt`, and plotted.
+To graph economic damages, the top ten damage-causing events are
+selected from the data set, transformed by `melt`, and plotted.
 
 ```{r graph_economic_damages}
 damage.by.event <- head(select(arrange(effect.by.event,desc(totalDamage)),event,cropDamage,propertyDamage),n=10)
@@ -387,7 +511,11 @@ damage.g <- ggplot(long.format.damage, aes(x = event,
      labs(fill = "Damage Type")
 ```
 
-Deriving the seasonal nature of economic damage requires a bit more work.  The individual observations are restricted to only the top ten events as measured by economic impact.  These events are then divided into property or crop damage so that both can be plotted on a monthly basis to determine seasonal flows.
+Deriving the seasonal nature of economic damage requires a bit more
+work.  The individual observations are restricted to only the top ten
+events as measured by economic impact.  These events are then divided
+into property or crop damage so that both can be plotted on a monthly
+basis to determine seasonal flows.
 
 ```{r graph_monthly_economic_damage}
 monthly.top10.damage <- filter(storm.data,event %in% top10.damage.events)
@@ -419,18 +547,18 @@ damage.seasons.g <- ggplot(monthly.damage.table,aes(
        ggtitle("Damage Seasonality")
 ```
 
-From the graphs, the leading cause of property damage is floods, followed by
-hurricanes and storm surges, and tornados.  Crop
-damage is due mainly to droughts and floods, with somewhat smaller
-contributions from hurricanes, ice, and hail.
+From the graphs, the leading cause of property damage is floods,
+followed by hurricanes and storm surges, and tornados.  Crop damage is
+due mainly to droughts and floods, with somewhat smaller contributions
+from hurricanes, ice, and hail.
 
 As with casualties, economic damage has seasonal flows.  Spring
-property damage in April and May is caused by tornados and floods, while fall
-property damage in August through October is caused by the peak of
-hurricane and storm surge.  Crop damage is caused mainly during the
-summer, which is not surprising given the agricultural growing season.
-Both droughts and floods have similar peak seasons in June through
-September.
+property damage in April and May is caused by tornados and floods,
+while fall property damage in August through October is caused by the
+peak of hurricane and storm surge.  Crop damage is caused mainly
+during the summer, which is not surprising given the agricultural
+growing season.  Both droughts and floods have similar peak seasons in
+June through September.
 
 ```{r plot_damage_graphs, fig.cap="Figure 3: Storm-related economic impacts"}
 grid.newpage()
@@ -441,4 +569,11 @@ print(damage.seasons.g,vp=viewport(layout.pos.row=1,layout.pos.col=2))
 
 # Further research
 
-Future analyses of this data set could study the average casualty or economic damage per individual storm event.  For example, tornadoes taken as a whole cause more  casualties than hurricanes, but an individual hurricane causes significantly greater damage than an individual tornado.  It may also be possible to compare total damages to the size of either the national population with census data, or to the national economy by using economic statistics to adjust economic damages for inflation.
+Future analyses of this data set could study the average casualty or
+economic damage per individual storm event.  For example, tornadoes
+taken as a whole cause more casualties than hurricanes, but an
+individual hurricane causes significantly greater damage than an
+individual tornado.  It may also be possible to compare total damages
+to the size of either the national population with census data, or to
+the national economy by using economic statistics to adjust economic
+damages for inflation.
