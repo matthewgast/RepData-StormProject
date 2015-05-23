@@ -14,14 +14,14 @@ output:
 
 Severe weather affects the population both through direct harm to individuals in the population, as well as by inflicting economic damage by harm to both property and crops.  This paper analyzes data collected by the National Oceanographic and Atmospheric Administration (NOAA) to assess the harm from severe weather in the United States.
 
-Population harm is measured by casualties, which consist of both deaths and injuries.  The most dangerous weather event to people tornados, followed distantly by heat-related weather.  Severe weather events have seasonal patterns, with tornados doing the most harm to the population
+Population harm is measured by casualties, which consist of both deaths and injuries.  The most dangerous weather event to people is tornados, followed by heat-related weather.  Severe weather events have seasonal patterns, with tornados doing the most harm to the population
 in the spring (April), heat-related weather doing the most harm in the
 summer (July), and flooding doing the most harm in the fall (October).
 
 The economic consequences of severe weather come from both damage to
-property ($392B) and damage to crops ($42B), with most of the total
+property and damage to crops, with most of the total
 economic damage coming from property damage.  The main source of crop
-damage is drought, followed by floods, hurricanes, and storm surges.  Severe weather events have seasonal patterns as well, with crop damage peaking late during the growing season from June through September.
+damage is drought, followed by floods and hurricanes.  Severe weather events have seasonal patterns as well, with crop damage peaking late during the growing season from June through September.
 Property damage is done
 mainly by floods, with significant contributions from hurricanes and
 tornados.  Flood damage is concentrated in January, with tornado
@@ -209,16 +209,13 @@ types to have an initial capital letter in each word.
 storm.data$event <- sapply(storm.data$event, initialCap)
 ```
 
-## Selecting a year
+## Selecting a subset of years
 
-Modern events are supposed to be more complete.  So let's look at that.  In the 1950s through the 1980s, the events are low.  It is only later on that the number of events keeps pace and some event types are measured.
-
-Add a count field so that the aggregate function can sum up.
+The code book describing the data states that data is more complete in later years.  As a rudimentary assessment of data completeness, the first plot will examine types of weather events in the data set.  To count up the types of events, a column is added to the storm data set so that when data is aggregated with the `sum` function, it will count the number of events that are aggregated together.  This basic analysis focuses on the ten most common types of events in the data set, which include flash floods, floods, hail, lightning, rain, snow, thunderstorm winds, tornados, wind, and winter weather.
 
 ```{r count_events_by_year}
 storm.data.ctr <- mutate(storm.data,count=1)
-event.count <- aggregate(. ~ event+year,data=storm.data.ctr,FUN=sum)
-event.count <- select(event.count,event,year,count)
+event.count <- select(aggregate(. ~ event+year,data=storm.data.ctr,FUN=sum),event,year,count)
 
 total.events <- aggregate(.~event, data=event.count,FUN=sum)
 top10.events <- head(arrange(total.events,desc(count)),n=10)
@@ -226,34 +223,35 @@ top10.eventnames <- top10.events$event
 top10events.by.year <- filter(event.count,event %in% top10.eventnames)
 ```
 
+To assess the quality of recordkeeping, plot the number of events per year of the major types.  In left panel of the plot, it is apparent that tornado, thunderstorm, and hail data has been collected since the 1950s.  However, starting in the early 1990s, data became much more comprehensive.  This paper divides the data into a "historic" era and a "modern" era in 1993, denoted by a vertical line on the left panel.  The remainder of the analysis is restricted to post-1993 data because it allows for direct comparison between storm types.  If the entire data set were to be used, thunderstorms and tornados would be overrepresented because the historic data has much more data on thunderstorms.  The following panel of plots shows the overall data set with a vertical line in 1993, and then the post-1993 data in the right plot.
+
 ```{r graph_events_by_year}
 eventcount.base.g <- ggplot(top10events.by.year, aes(x = year,
     	       y = count,
 			       fill=event)) +
-     geom_bar(stat='identity') +
+     geom_area(stat='identity') +
      xlab("year") +
      theme(axis.text.x = element_text(angle=45, hjust=1)) +
      ylab("Number of events (thousands)") +
      scale_y_continuous(labels=thousands) +
-     ggtitle("Weather events per year") +
-     labs(fill = "Event type")
+     scale_x_continuous(breaks=seq(1950,2010,10)) +
+     ggtitle("Weather events per year")
+```     
 
-eventcount.g <- eventcount.base.g + geom_vline(aes(xintercept=1993))
-
-eventcount.modern.g <- eventcount.base.g + scale_x_continuous(limits=c(1992,2011))
+```{r plot_event_graphs, fig.cap="Figure 1: Distribution of annual weather events"}
+eventcount.g <- eventcount.base.g + geom_vline(aes(xintercept=1993)) + guides(fill = FALSE)
+eventcount.modern.g <- eventcount.base.g + scale_x_continuous(limits=c(1993,2011)) + labs(fill = "Event type")
 
 grid.arrange(eventcount.g,eventcount.modern.g,ncol=2)
 
 ```
 
-Based on the second graph, we keep only data from 1993 and later.  And in fact, it's still most of the data!
-
+Based on the right panel plot, this analysis restricts itself to data in 1993 and later, which is still most of the data.  Even after discarding the historical data prior to 1993, almost 80% of the data remain for analysis.
 
 ```{r keep_only_late_data}
 storm.data <- filter(storm.data,year>=1993)
 dim(storm.data)
 ```
-
 
 ## Final data processing
 
@@ -271,7 +269,7 @@ storm.data <- mutate(storm.data,
 storm.data = storm.data %>% select(event,year,month,propertyDamage,cropDamage,totalDamage,deaths,injuries,casualties)
 ```
 
-As an auxiliary bit of data, a second data frame is created that aggregates the effects of each type of weather event.  When aggregating
+As an auxiliary summary, a second data frame is created that aggregates the effects of each type of weather event.  When aggregating
 events, we only wish to aggregate economic damage and casualty data,
 and it does not make sense to aggregate month and year numbers.
 
@@ -331,7 +329,7 @@ nontornado.casualties.g <- ggplot(long.format.nontornado.casualties, aes(x = eve
      labs(fill = "Casualty Type")
 ```
 
-Many types of severe weather are seasonal.  To search out the flow of 
+Many types of severe weather are seasonal.  To search out the annual patterns, it is possible to sum up casualties on a monthly basis throughout the data set.  To avoid having an unwieldy number of weather causes, this analysis is done only for the top ten events that cause casualties.
 
 ``` {r seasonal_casualty_graph}
 monthly.top10.casualties <- filter(storm.data,event %in% top10.casualty.event)
@@ -352,7 +350,9 @@ casualty.seasons.g <- ggplot(monthly.casualties,aes(
        ggtitle("Weather Casualty Seasonality")
 ```
 
-```{r}
+From the casualty plots, it is apparent that the deadliest event type is heat, though tornados cause many more injuries than heat.  Both floods and flash floods make the list, with flash flooding more likely to kill, though flooding causes many more injuries.  There is a definite seasonal nature to the casualty data, with tornados doing damage in the spring, giving way to heat in the summer.
+
+```{r casualty_panel_plot, fig.cap="Figure 2: Storm-related casualties"}
 grid.newpage()
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(casualties.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
@@ -360,61 +360,14 @@ print(nontornado.casualties.g,vp=viewport(layout.pos.row=2,layout.pos.col=1))
 print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
 ```
 
-By far, the most dangerous weather events are tornados, with nearly
-ten times the casualties of the next event type, as readily seen in
-the first plot in the panel below.  Fortunately, most casualties
-inflicted on the population from severe weather is due to injury, and
-not death.
-
-By far the leading cause of death is tornados, followed by heat, flash
-floods, lightning, and thunderstorm-related winds.  The leading causes
-of injuries are tornados, thunderstorm-related winds, heat, and
-flooding.  Flash floods tend to kill, while normal floods injure.
-Depending on the propensity of an area to suffer from floods versus
-flash floods may result in different emerency planning.
-
-Different weather events have different seasonal patterns, as shown by
-the second graph in the panel below.  Tornado activity is most
-prominent in the spring.  Heat activity and flash floods occur
-prominently in the summer, and floods happen mostly in the fall.
-Depending on the type of severe weather expected, emergency management
-agencies may need to be ready at different times of year.
-
-
 # Research Question 2: Economic Consequences of Weather
 
-*Across the United States, which types of events have the greatest
- economic consequences?*
+The research question answered in this section of the paper is: *Across the United States, which types of events have the greatest economic consequences?*
 
 Economic consequences are divided into damage to property and damage
-to crops.  As before, total damages are plotted in the first in the
-first panel.  Damage is dominated by property damage, which is far
-greater than total crop damage.  The panel plots only the top ten
-event types that cause economic damage.  All but one of the ten events
-caused more damage to property than crops.
+to crops.  In the top ten economic damage-causing events, property damage totals $360 billion, while crop damage is only $42 billion.  Of the top ten damage-causing events, only drought causes more damage to crops than property.
 
-The leading cause of property damage is flooding, followed by
-hurricanes and storm surges (often related), and tornados.  Crop
-damage is due mainly to droughts and floods, with somewhat smaller
-contributions from hurricanes, ice, and hail.
-
-As with casualties, economic damage has seasonal flows.  Spring
-property damage in April and May is caused by tornados, while fall
-property damage in August through October is caused by the peak of
-hurricane and storm surge.  Crop damage is caused mainly during the
-summer, which is not surprising given the agricultural growing season.
-Both droughts and floods have similar peak seasons in June through
-September.
-
-To obtain the graphs in the panel below, the raw data was summarized
-by event type.  This paper combines both property and crop damage into
-a total damage measurement, and produced graphs containing only the
-top 10 economic damage-causing events.  Plotting both types of
-economic damage on the same scale was facilitated by using the `melt`
-function to reformat the data to be more compatible with plotting
-functions.  Seasonal graphs were obtained by summarizing results by
-month over the course of the entire data set.
-
+To graph economic damages, the top ten damage-causing events are selected from the data set, transformed by `melt`, and plotted.
 
 ```{r graph_economic_damages}
 damage.by.event <- head(select(arrange(effect.by.event,desc(totalDamage)),event,cropDamage,propertyDamage),n=10)
@@ -432,16 +385,20 @@ damage.g <- ggplot(long.format.damage, aes(x = event,
      scale_fill_brewer(palette="Set1",label=c("Crop","Property")
                       ) +
      labs(fill = "Damage Type")
+```
 
+Deriving the seasonal nature of economic damage requires a bit more work.  The individual observations are restricted to only the top ten events as measured by economic impact.  These events are then divided into property or crop damage so that both can be plotted on a monthly basis to determine seasonal flows.
+
+```{r graph_monthly_economic_damage}
 monthly.top10.damage <- filter(storm.data,event %in% top10.damage.events)
 monthly.damage <- aggregate (. ~event+month, data=monthly.top10.damage,FUN=sum)
 
 monthly.propdmg <- select(monthly.damage,event,month,propertyDamage)
-monthly.propdmg <- mutate(monthly.damage,damage=propertyDamage,type="Property")
+monthly.propdmg <- mutate(monthly.propdmg,damage=propertyDamage,type="Property")
 monthly.propdmg <- select(monthly.propdmg,event,month,damage,type)
 
 monthly.cropdmg <- select(monthly.damage,event,month,cropDamage)
-monthly.cropdmg <- mutate(monthly.damage,damage=cropDamage,type="Crop")
+monthly.cropdmg <- mutate(monthly.cropdmg,damage=cropDamage,type="Crop")
 monthly.cropdmg <- select(monthly.cropdmg,event,month,damage,type)
 
 monthly.damage.table <- rbind(monthly.propdmg,monthly.cropdmg)
@@ -460,25 +417,28 @@ damage.seasons.g <- ggplot(monthly.damage.table,aes(
        ylab("Property Damage (billion USD)") +
        scale_y_continuous(labels=billions) +
        ggtitle("Damage Seasonality")
+```
 
+From the graphs, the leading cause of property damage is floods, followed by
+hurricanes and storm surges, and tornados.  Crop
+damage is due mainly to droughts and floods, with somewhat smaller
+contributions from hurricanes, ice, and hail.
 
+As with casualties, economic damage has seasonal flows.  Spring
+property damage in April and May is caused by tornados and floods, while fall
+property damage in August through October is caused by the peak of
+hurricane and storm surge.  Crop damage is caused mainly during the
+summer, which is not surprising given the agricultural growing season.
+Both droughts and floods have similar peak seasons in June through
+September.
 
-
+```{r plot_damage_graphs, fig.cap="Figure 3: Storm-related economic impacts"}
 grid.newpage()
 pushViewport(viewport(layout=grid.layout(1,2)))
 print(damage.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
 print(damage.seasons.g,vp=viewport(layout.pos.row=1,layout.pos.col=2))
-
 ```
 
+# Further research
 
-# Appendix: Further research
-
-Other things to do:
-- study average damages per event (not event type, per event; hurricanes do more damage individaully than tornadoes)
-- study average human effects (again, a single hurricane does more than a tornado)
-- 
-
-For completeness, this includes the simplify function text.  It is large and distracts from the main flow of the paper.
-
-TODO - figure out how to embed an existing R doc in the text.
+Future analyses of this data set could study the average casualty or economic damage per individual storm event.  For example, tornadoes taken as a whole cause more  casualties than hurricanes, but an individual hurricane causes significantly greater damage than an individual tornado.  It may also be possible to compare total damages to the size of either the national population with census data, or to the national economy by using economic statistics to adjust economic damages for inflation.
