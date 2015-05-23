@@ -1,24 +1,28 @@
 ---
-title: "Economic and Human Consequences of Storms: An Analysis of NOAA Storm Data"
-output: 
+title: 'Economic and Human Consequences of Storms: An Analysis of NOAA Storm Data'
+author: "Matthew Gast"
+date: "May 22, 2015"
+output:
   html_document:
-    keep_md: true
+    fig_caption: yes
+    fig_height: 8
+    fig_width: 10.5
+    keep_md: yes
 ---
 
 # Synopsis
 
-The most dangerous weather event to the population is tornados,
-followed distantly by heat-related weather.  Severe weather has
-seasonal effects, with tornados doing the most harm to the population
+Severe weather affects the population both through direct harm to individuals in the population, as well as by inflicting economic damage by harm to both property and crops.  This paper analyzes data collected by the National Oceanographic and Atmospheric Administration (NOAA) to assess the harm from severe weather in the United States.
+
+Population harm is measured by casualties, which consist of both deaths and injuries.  The most dangerous weather event to people tornados, followed distantly by heat-related weather.  Severe weather events have seasonal patterns, with tornados doing the most harm to the population
 in the spring (April), heat-related weather doing the most harm in the
-summer (July), and flooding in the fall (October.)
+summer (July), and flooding doing the most harm in the fall (October).
 
 The economic consequences of severe weather come from both damage to
 property ($392B) and damage to crops ($42B), with most of the total
 economic damage coming from property damage.  The main source of crop
-damage is drought, followed by floods, hurricanes, and storm surges.
-Crop damage peaks in the summer, with damage from the major event
-types ocurring in June through September.  Property damage is done
+damage is drought, followed by floods, hurricanes, and storm surges.  Severe weather events have seasonal patterns as well, with crop damage peaking late during the growing season from June through September.
+Property damage is done
 mainly by floods, with significant contributions from hurricanes and
 tornados.  Flood damage is concentrated in January, with tornado
 damages coming in the spring (April and May), and hurricane damage in
@@ -28,29 +32,28 @@ the late summer and fall (August through October).
 
 Before performing the analysis, the relevant data was loaded and
 preprocessed.  All code that supports this document is found in the
-[Github
-repository](https://github.com/matthewgast/RepData-StormProject) for
-the project.
+[Github repository](https://github.com/matthewgast/RepData-StormProject) for
+the project.  To improve the readability of this paper, many repetitive tasks have been turned into functions, and links to the full code will be available at GitHub.
 
 1.  Environment setup
 
 Several support functions are used in this document, and are contained
-in the file `script.R`.  Therefore, to set up the environment, the
-support code is loaded.  The first thing performed by the code is to
-load required R packages to support the analysis in the document.
+in the file [script.R](https://github.com/matthewgast/RepData-StormProject/blob/master/script.R).
+Therefore, to set up the environment, the
+support code is loaded.  This paper makes use of several R packages to support the analysis in the document.
 
 ```{r setup_environment}
-source("script.R")
+source("storm-data-support-functions.R")
 loadPackages()
 ```
 
 2.  Read data and assess data quality
 
-With the environment set up, data is read by a support function.  The
+With the environment set up, data is read by a support function called `readData()`.  The
 support function reads in the data, but performs no processing.  When
-complete, the raw data comprises over 900,000 weather events.
+complete, the raw data comprises over 900,000 weather events, as seen by the `dim()` function.
 
-```{r read_data}
+```{r read_data, cache=TRUE}
 storm.data.raw <- readData()
 dim(storm.data.raw)
 ```
@@ -64,11 +67,11 @@ names(storm.data.raw)
 
 For the purpose of this analysis, we care about the following fields:
 
-- EVTYPE: the type of weather event
-- BGN_DATE: the date gives us an indication of the seasonality of the storm event.
-- FATALITIES and INJURIES: together, these two fields give us an indication of the total human cost of storm events.
-- PROPDMG and PROPDMGEXP: The data set expresses property damage as the combination of a number and an exponent.  For example, US$25,000 is expressed as a value of 25 and an exponent of 3.
-- CROPDMG and CROPDMGEXP: Crop damage is expressed as  
+- EVTYPE: The type of weather event, such as a drought, flood, or tornado.
+- BGN_DATE: The date at which a particular weather event began.  This field is used to study the seasonality of weather events.
+- FATALITIES and INJURIES: together, these two fields give us an indication of the total human cost of storm events.  In this analysis, they will be combined into a single "casualty" number.
+- PROPDMG and PROPDMGEXP: The data set expresses property damage as the combination of a number and an exponent.  For example, US$25,000 is expressed as a value of 25 and an exponent of "K" for thousand.
+- CROPDMG and CROPDMGEXP: Crop damage is expressed in the same manner as property damage.
 
 With a large amount of data, it is important to assess how much of the
 data is present.  Most of the data fields in the data set are full,
@@ -78,6 +81,8 @@ analysis.
 ```{r count_nas}
 countNAs (storm.data.raw)
 ```
+
+After deciding which fields are relevant to the 
 
 With the determination of the fields that matter, filter out the data
 relevant to the analysis.  Fields that are final data will be renamed
@@ -103,6 +108,8 @@ data using the date manipulation fields.
 storm.data$month <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%m"))
 storm.data$year <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%Y"))
 ```
+
+XXX - look at years of data
 
 ## Economic damage fields
 
@@ -141,7 +148,7 @@ damage, there are 11,330 events in the "M"illon range, 7 events in the
 million.  When translated, there are 11,341 events that have the
 exponent of 10^6, which matches identically.
 
-```{r translate_exponents}
+```{r translate_exponents, cache=TRUE}
 propExponent <- mapply(exponentTranslator,storm.data$PROPDMGEXP)
 cropExponent <- mapply(exponentTranslator,storm.data$CROPDMGEXP)
 table(storm.data$PROPDMGEXP)
@@ -183,12 +190,12 @@ topEvents(storm.data,10)
 After inspecting the event names, several combinations to the data are
 made.  there are over 900 event names in the database, the combination
 process is quite repetitive.  In this document, it is carried out by
-the function `simplifyEvents`, which is reproduced in Appendix A.  As
+the function `simplifyEvents`, which is available in the GitHub repository.  As
 a result of the simplification, events related to rain and winter
 weather appear in the top 10 event types, and a substantial reduction
 in the number of unique event types is achieved.
 
-```{r simplify_event_strings}
+```{r simplify_event_strings, cache=TRUE}
 source("simplifyEvents.R")
 storm.data <- simplifyEvents(storm.data)
 topEvents(storm.data,10)
@@ -199,14 +206,14 @@ The final step in processing event types is to reformat event types as
 mixed-case names with the help of a function that rewrites even
 types to have an initial capital letter in each word.
 
-```{r prettyprint_events}
+```{r prettyprint_events, cache=TRUE}
 storm.data$event <- sapply(storm.data$event, initialCap)
 ```
 
 ## Final data processing
 
 The final steps in data processing are to drop extraneous columns of
-raw data, retaining only the even type, casualty counts, damage
+raw data, retaining only the event type, casualty counts, damage
 information, and the extracted month and year.  Finally, the column
 order is rewritten so that related columns are next to each other to
 improve readability.
@@ -282,10 +289,27 @@ casualties.g <- ggplot(long.format.casualties, aes(x = event,
      theme(axis.text.x = element_text(angle=45, hjust=1)) +
      ylab("Casualties (thousands)") +
      scale_y_continuous(labels=thousands) +
-     ggtitle("Casualties from Top 10 Severe Weather Events") +
+     ggtitle("Severe Weather Casualties") +
      scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
                       ) +
-     labs(fill = "Type of Casualty")
+     labs(fill = "Casualty Type")
+
+nontornado.casualties <- tail(head(select(arrange(effect.by.event,desc(casualties)),event,deaths,injuries),n=11),n=10)
+nontornado.casualty.events <- nontornado.casualties$event
+long.format.nontornado.casualties <- melt(nontornado.casualties)
+nontornado.casualties.g <- ggplot(long.format.nontornado.casualties, aes(x = event,
+  		       y = value,
+			       fill=variable)) +
+     geom_bar(stat='identity') +
+     xlab("Type of event") +
+     theme(axis.text.x = element_text(angle=45, hjust=1)) +
+     ylab("Casualties (thousands)") +
+     scale_y_continuous(labels=thousands) +
+     ggtitle("Non-Tornado Casualties") +
+     scale_fill_brewer(palette="Set1",label=c("deaths","injuries")
+                      ) +
+     labs(fill = "Casualty Type")
+
 
 monthly.top10.casualties <- filter(storm.data,event %in% top10.casualty.event)
 monthly.casualties <- aggregate (. ~ event+month,data=monthly.top10.casualties,FUN=sum)
@@ -301,10 +325,16 @@ casualty.seasons.g <- ggplot(monthly.casualties,aes(
        xlab("Month") +
        ylab("Casualties (thousands)") +
        scale_y_continuous(labels=thousands) +
-       ggtitle("Seasonality of Top 10 Casualty Weather Events")
+       labs(fill="Weather Type") +
+       ggtitle("Weather Casualty Seasonality")
 
-grid.arrange(casualties.g,casualty.seasons.g,ncol=1)
+#grid.arrange(casualties.g,casualty.seasons.g,ncol=1)
 
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(casualties.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
+print(nontornado.casualties.g,vp=viewport(layout.pos.row=2,layout.pos.col=1))
+print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
 ```
 
 # Research Question 2: Economic Consequences of Weather
@@ -344,6 +374,7 @@ month over the course of the entire data set.
 
 ```{r graph_economic_damages}
 damage.by.event <- head(select(arrange(effect.by.event,desc(totalDamage)),event,cropDamage,propertyDamage),n=10)
+top10.damage.events <- damage.by.event$event
 long.format.damage <- melt(damage.by.event)
 damage.g <- ggplot(long.format.damage, aes(x = event,
 			       y = value,
@@ -353,50 +384,56 @@ damage.g <- ggplot(long.format.damage, aes(x = event,
      theme(axis.text.x = element_text(angle=45, hjust=1)) +
      ylab("US$ Damage (billions)") +
      scale_y_continuous(labels=billions) +
-     ggtitle("Economic Damage from Severe Weather") +
+     ggtitle("Severe Weather Economic Damage") +
      scale_fill_brewer(palette="Set1",label=c("Crop","Property")
                       ) +
      labs(fill = "Damage Type")
 
-propdmg.by.event <- head(select(arrange(effect.by.event,desc(propertyDamage)),event,propertyDamage),n=10)
-top10.propdmg.event <- propdmg.by.event$event
-monthly.top10.propdmg <- filter(storm.data,event %in% top10.propdmg.event)
-monthly.propdmg <- aggregate (. ~ event+month,data=monthly.top10.propdmg,FUN=sum)
-property.seasons.g <- ggplot(monthly.propdmg,aes(
-				x=reorder(month.name[month],month),
-				y=propertyDamage,
+monthly.top10.damage <- filter(storm.data,event %in% top10.damage.events)
+monthly.damage <- aggregate (. ~event+month, data=monthly.top10.damage,FUN=sum)
+
+monthly.propdmg <- select(monthly.damage,event,month,propertyDamage)
+monthly.propdmg <- mutate(monthly.damage,damage=propertyDamage,type="Property")
+monthly.propdmg <- select(monthly.propdmg,event,month,damage,type)
+
+monthly.cropdmg <- select(monthly.damage,event,month,cropDamage)
+monthly.cropdmg <- mutate(monthly.damage,damage=cropDamage,type="Crop")
+monthly.cropdmg <- select(monthly.cropdmg,event,month,damage,type)
+
+monthly.damage.table <- rbind(monthly.propdmg,monthly.cropdmg)
+
+damage.seasons.g <- ggplot(monthly.damage.table,aes(
+  			x=reorder(month.name[month],month),
+				y=damage,
 				fill=event)
 				) +
+       facet_grid(type ~ ., scales="free") +
+       labs(fill="Weather Type") +
        geom_bar(stat='identity') + 
        theme(legend.title=element_blank(),
 	     axis.text.x=element_text(angle=45, hjust=1)) +
        xlab("Month") +
        ylab("Property Damage (billion USD)") +
        scale_y_continuous(labels=billions) +
-       ggtitle("Seasonality of Top 10 Property Damage Weather Events")
+       ggtitle("Damage Seasonality")
 
-cropdmg.by.event <- head(select(arrange(effect.by.event,desc(cropDamage)),event,cropDamage),n=10)
-top10.cropdmg.event <- cropdmg.by.event$event
-monthly.top10.cropdmg <- filter(storm.data,event %in% top10.cropdmg.event)
-monthly.cropdmg <- aggregate (. ~ event+month,data=monthly.top10.cropdmg,FUN=sum)
-crop.seasons.g <- ggplot(monthly.cropdmg,aes(
-				x=reorder(month.name[month],month),
-				y=cropDamage,
-				fill=event)
-				) +
-       geom_bar(stat='identity') + 
-       theme(legend.title=element_blank(),
-	     axis.text.x=element_text(angle=45, hjust=1)) +
-       xlab("Month") +
-       ylab("Crop Damage (billion USD)") +
-       scale_y_continuous(labels=billions) +
-       ggtitle("Seasonality of Top 10 Crop Damage Weather Events")
 
-grid.arrange(damage.g,property.seasons.g,crop.seasons.g,ncol=1)
+
+
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(1,2)))
+print(damage.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
+print(damage.seasons.g,vp=viewport(layout.pos.row=1,layout.pos.col=2))
+
 ```
 
 
-# Appendix: Simplifying weather types
+# Appendix: Further research
+
+Other things to do:
+- study average damages per event (not event type, per event; hurricanes do more damage individaully than tornadoes)
+- study average human effects (again, a single hurricane does more than a tornado)
+- 
 
 For completeness, this includes the simplify function text.  It is large and distracts from the main flow of the paper.
 
