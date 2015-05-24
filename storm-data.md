@@ -1,14 +1,6 @@
----
-title: 'Economic and Human Consequences of Storms: An Analysis of NOAA Storm Data'
-author: "Matthew Gast"
-date: "May 2015"
-output:
-  html_document:
-    fig_caption: yes
-    fig_height: 8
-    fig_width: 10.5
-    keep_md: yes
----
+# Economic and Human Consequences of Storms: An Analysis of NOAA Storm Data
+Matthew Gast  
+May 2015  
 
 # Synopsis
 
@@ -55,9 +47,26 @@ Therefore, to set up the environment, the support code is loaded.
 This paper makes use of several R packages to support the analysis in
 the document, which are loaded by the `loadPackages()` function.
 
-```{r setup_environment}
+
+```r
 source("storm-data-support-functions.R")
 loadPackages()
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+## 
+## Loading required package: grid
+## Loading required package: RColorBrewer
 ```
 
 2.  Read data and assess data quality
@@ -69,7 +78,8 @@ returns a data frame with the raw data.  When complete, the raw data
 comprises over 900,000 weather events, as seen by the `dim()`
 function.
 
-```{r read_data, cache=TRUE}
+
+```r
 readData <- function (directory) {
 # This function reads NOAA weather data from the disk.
 #
@@ -87,11 +97,27 @@ storm.data.raw <- readData()
 dim(storm.data.raw)
 ```
 
+```
+## [1] 902297     37
+```
+
 Now that the data is in place, look at the column names in the raw
 data.
 
-```{r show_data_names}
+
+```r
 names(storm.data.raw)
+```
+
+```
+##  [1] "STATE__"    "BGN_DATE"   "BGN_TIME"   "TIME_ZONE"  "COUNTY"    
+##  [6] "COUNTYNAME" "STATE"      "EVTYPE"     "BGN_RANGE"  "BGN_AZI"   
+## [11] "BGN_LOCATI" "END_DATE"   "END_TIME"   "COUNTY_END" "COUNTYENDN"
+## [16] "END_RANGE"  "END_AZI"    "END_LOCATI" "LENGTH"     "WIDTH"     
+## [21] "F"          "MAG"        "FATALITIES" "INJURIES"   "PROPDMG"   
+## [26] "PROPDMGEXP" "CROPDMG"    "CROPDMGEXP" "WFO"        "STATEOFFIC"
+## [31] "ZONENAMES"  "LATITUDE"   "LONGITUDE"  "LATITUDE_E" "LONGITUDE_"
+## [36] "REMARKS"    "REFNUM"
 ```
 
 For the purpose of this analysis, we care about the following fields:
@@ -107,8 +133,17 @@ data is present.  Most of the data fields in the data set are full,
 with only four fields showing an NAs, none of which matter to the
 analysis.
 
-```{r count_nas}
+
+```r
 countNAs (storm.data.raw)
+```
+
+```
+##             count
+## COUNTYENDN 902297
+## F          843563
+## LATITUDE       47
+## LATITUDE_E     40
 ```
 
 After deciding which fields are relevant to the analysis, select only
@@ -119,7 +154,8 @@ processing in order to assume their final form.  As a hint to the
 state of the analysis, fields requiring further processing will retain
 their all-capitalized field names.
 
-```{r select_data_fields}
+
+```r
 storm.data <- select(storm.data.raw,EVTYPE,BGN_DATE,FATALITIES,INJURIES,PROPDMG,PROPDMGEXP,CROPDMG,CROPDMGEXP)
 names(storm.data) <- c("event","BGN_DATE","deaths","injuries","PROPDMG",
 		  "PROPDMGEXP","CROPDMG","CROPDMGEXP")
@@ -136,11 +172,23 @@ the date manipulation functions.
 The range of time covered by the dataset may be given by looking at
 the `min()` and `max()` year in the date range.
 
-```{r extract_dates}
+
+```r
 storm.data$month <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%m"))
 storm.data$year <- as.numeric(format(as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S"), "%Y"))
 min(storm.data$year)
+```
+
+```
+## [1] 1950
+```
+
+```r
 max(storm.data$year)
+```
+
+```
+## [1] 2011
 ```
 
 4. Economic damage fields
@@ -155,9 +203,22 @@ The `levels()` function will print out a list of all the values a
 column takes on to show what kinds of information is contained in the
 field.
 
-```{r print_exponent_levels}
+
+```r
 levels(storm.data$PROPDMGEXP)
+```
+
+```
+##  [1] ""  "-" "?" "+" "0" "1" "2" "3" "4" "5" "6" "7" "8" "B" "h" "H" "K"
+## [18] "m" "M"
+```
+
+```r
 levels(storm.data$CROPDMGEXP)
+```
+
+```
+## [1] ""  "?" "0" "2" "B" "k" "K" "m" "M"
 ```
 
 According to the code book for the data, the exponent fields should be
@@ -171,9 +232,42 @@ affect the analysis, it is possible to look at how often they occur.
 As it turns out, very few events use exponents that are dash, plus, or
 question mark.
 
-```{r show_weird_exponents}
+
+```r
 select(subset(storm.data,PROPDMGEXP %in% c("-","+","?")),event,month,year,PROPDMG,PROPDMGEXP)
+```
+
+```
+##                      event month year PROPDMG PROPDMGEXP
+## 188780    BREAKUP FLOODING     5 1995      20          +
+## 189001           HIGH WIND    12 1994      20          +
+## 192262 FLOODING/HEAVY RAIN     3 1995       2          +
+## 198689  THUNDERSTORM WINDS     4 1995       0          ?
+## 216755          HIGH WINDS     6 1995      15          +
+## 216802             TORNADO     6 1995      60          +
+## 225254         FLASH FLOOD     5 1993       0          ?
+## 227409         FLASH FLOOD     5 1993       0          ?
+## 229327           HIGH WIND    12 1995      15          -
+## 232016   THUNDERSTORM WIND     8 1994       0          ?
+## 233746                HAIL     9 1995       0          ?
+## 233747                HAIL     9 1995       0          ?
+## 233748                HAIL     9 1995       0          ?
+## 247617  THUNDERSTORM WINDS     7 1995       0          ?
+```
+
+```r
 select(subset(storm.data,CROPDMGEXP %in% c("-","+","?")),event,month,year,CROPDMG,CROPDMGEXP)
+```
+
+```
+##                     event month year CROPDMG CROPDMGEXP
+## 192467  FLASH FLOOD WINDS     3 1995       0          ?
+## 197066 THUNDERSTORM WINDS     2 1993       0          ?
+## 197331 THUNDERSTORM WINDS     2 1993       0          ?
+## 220300 THUNDERSTORM WINDS     7 1995       0          ?
+## 220877  FLOOD/FLASH FLOOD     2 1995       0          ?
+## 232901  FLOOD/FLASH FLOOD     8 1995       0          ?
+## 242953 THUNDERSTORM WINDS     4 1995       0          ?
 ```
 
 A few exponent fields are even a number.  The code book does not
@@ -204,19 +298,56 @@ possible to get an idea of the magnitude of the impact of severe
 weather.  Property damage events with billions of dollars in damage
 are significantly more common than high-value crop damage events.
 
-```{r translate_exponents, cache=TRUE}
+
+```r
 propExponent <- mapply(exponentTranslator,storm.data$PROPDMGEXP)
 cropExponent <- mapply(exponentTranslator,storm.data$CROPDMGEXP)
 table(storm.data$PROPDMGEXP)
+```
+
+```
+## 
+##             -      ?      +      0      1      2      3      4      5 
+## 465934      1      8      5    216     25     13      4      4     28 
+##      6      7      8      B      h      H      K      m      M 
+##      4      5      1     40      1      6 424665      7  11330
+```
+
+```r
 table(propExponent)
+```
+
+```
+## propExponent
+##      0      1      2      3      4      5      6      7      8      9 
+##    216 465973     20 424669      4     28  11341      5      1     40
+```
+
+```r
 table(storm.data$CROPDMGEXP)
+```
+
+```
+## 
+##             ?      0      2      B      k      K      m      M 
+## 618413      7     19      1      9     21 281832      1   1994
+```
+
+```r
 table(cropExponent)
+```
+
+```
+## cropExponent
+##      0      1      2      3      6      9 
+##     19 618420      1 281853   1995      9
 ```
 
 With exponents now available in numeric form, translate the damage
 value and exponents into total damage fields with a pipeline.
 
-```{r calculate_damage}
+
+```r
 storm.data <- storm.data %>%
     cbind(propExponent,cropExponent) %>%
     mutate(propertyDamage=PROPDMG*10^propExponent,
@@ -234,11 +365,30 @@ inconsistencies.  For example, a search through the event types
 determines that there are over 100,000 thunderstorm events, and those
 events have 82 different text descriptions.
 
-```{r assess_event_coding}
+
+```r
 length(unique(storm.data$event))
+```
+
+```
+## [1] 985
+```
+
+```r
 name.contains.tstorm <- grepl("THUNDERSTORM",storm.data$event,ignore.case=TRUE)
 sum(name.contains.tstorm)
+```
+
+```
+## [1] 109572
+```
+
+```r
 length(unique(storm.data[name.contains.tstorm,]$event))
+```
+
+```
+## [1] 82
 ```
 
 To shrink the event types to a manageable size, we begin by converting
@@ -248,9 +398,22 @@ events and the number of times they appear in the database.  Three of
 the top 10 events have essentially identical descriptors: "TSTM WIND",
 "THUNDERSTORM WIND", and "THUNDERSTORM WINDS".
 
-```{r uppercase_event_strings}
+
+```r
 storm.data$event <- toupper(storm.data$event)
 topEvents(storm.data,10)
+```
+
+```
+## 
+##               HAIL          TSTM WIND  THUNDERSTORM WIND 
+##             288661             219942              82564 
+##            TORNADO        FLASH FLOOD              FLOOD 
+##              60652              54277              25327 
+## THUNDERSTORM WINDS          HIGH WIND          LIGHTNING 
+##              20843              20214              15754 
+##         HEAVY SNOW 
+##              15708
 ```
 
 After inspecting the event names, several combinations to the data are
@@ -270,18 +433,37 @@ related to rain and winter weather appear in the top 10 event types,
 and a substantial reduction in the number of unique event types is
 achieved.
 
-```{r simplify_event_strings, cache=TRUE}
+
+```r
 source("simplifyEvents.R")
 storm.data <- simplifyEvents(storm.data)
 topEvents(storm.data,10)
+```
+
+```
+## 
+## THUNDERSTORM WIND              HAIL           TORNADO       FLASH FLOOD 
+##            324728            288829             60684             55039 
+##             FLOOD              WIND            WINTER              SNOW 
+##             30138             26013             19693             16610 
+##         LIGHTNING              RAIN 
+##             15755             11854
+```
+
+```r
 length(unique(storm.data$event))
+```
+
+```
+## [1] 419
 ```
 
 The final step in processing event types is to reformat event types as
 mixed-case names with the help of a function that rewrites even
 types to have an initial capital letter in each word.
 
-```{r prettyprint_events, cache=TRUE}
+
+```r
 storm.data$event <- sapply(storm.data$event, initialCap)
 ```
 
@@ -301,7 +483,8 @@ focuses on the ten most common types of events in the data set, which
 include flash floods, floods, hail, lightning, rain, snow,
 thunderstorm winds, tornados, wind, and winter weather.
 
-```{r count_events_by_year}
+
+```r
 event.count <- storm.data %>%
   group_by(event,year) %>%
   select(event,year) %>%
@@ -331,7 +514,8 @@ thunderstorms.  The following panel of plots shows the overall data
 set with a vertical line in 1993, and then the post-1993 data in the
 right plot.
 
-```{r graph_events_by_year, fig.cap="Figure 1: Distribution of annual weather events"}
+
+```r
 eventcount.base.g <- ggplot(top10.events.by.year, aes(x = year,
     	       y = count,
 			       fill=event)) +
@@ -351,18 +535,36 @@ eventcount.modern.g <- eventcount.base.g +
                        scale_x_continuous(limits=c(1993,2011)) +
                        labs(fill = "Event type") +
                        ggtitle("Weather Events (post-1993)")
+```
 
+```
+## Scale for 'x' is already present. Adding another scale for 'x', which will replace the existing scale.
+```
+
+```r
 grid.arrange(eventcount.g,eventcount.modern.g,ncol=2)
 ```
+
+```
+## Warning in loop_apply(n, do.ply): Removed 119 rows containing missing
+## values (position_stack).
+```
+
+![Figure 1: Distribution of annual weather events](storm-data_files/figure-html/graph_events_by_year-1.png) 
 
 Based on the right panel plot, this analysis restricts itself to data
 in 1993 and later, which is still most of the data.  Even after
 discarding the historical data prior to 1993, almost 80% of the data
 remain for analysis.
 
-```{r keep_only_late_data}
+
+```r
 storm.data <- filter(storm.data,year>=1993)
 dim(storm.data)
+```
+
+```
+## [1] 714738     14
 ```
 
 7. Simplify data
@@ -373,7 +575,8 @@ information, and the extracted month and year.  Finally, the column
 order is rewritten so that related columns are next to each other to
 improve readability.
 
-```{r simplify_data}
+
+```r
 storm.data <- storm.data %>%
   select(event,deaths,injuries,propertyDamage,cropDamage,month,year) %>%
   mutate(totalDamage=propertyDamage+cropDamage,
@@ -386,7 +589,8 @@ aggregating events, we only wish to aggregate economic damage and
 casualty data, and it does not make sense to aggregate month and year
 numbers.
 
-```{r calculate_effects_by_storm_type}
+
+```r
 effect.by.event <- aggregate (cbind(propertyDamage,
                                     cropDamage,
                                     totalDamage,
@@ -413,7 +617,8 @@ format more suitable for plotting with the `melt()` function.  Because
 the tornado event type is dominant, a second set of casualty data is
 calculated excluding tornado events for clarity.
 
-```{r casualty_processing}
+
+```r
 casualties.by.event <- effect.by.event %>%
     arrange(desc(casualties)) %>%
     select(event,deaths,injuries) %>%
@@ -421,10 +626,22 @@ casualties.by.event <- effect.by.event %>%
 
 top10.casualty.event <- casualties.by.event$event
 long.format.casualties <- melt(casualties.by.event)
+```
 
+```
+## Using event as id variables
+```
+
+```r
 nontornado.casualties <- tail(casualties.by.event,n=9)
 long.format.nontornado.casualties <- melt(nontornado.casualties)
+```
 
+```
+## Using event as id variables
+```
+
+```r
 monthly.casualties <- storm.data %>%
   filter(event %in% top10.casualty.event) %>%
   group_by(event,month) %>%
@@ -443,7 +660,8 @@ more rows than columns, so creating the monthly data is best done by
 aggregating rows of property damage and rows of crop damage into one
 data frame.
 
-```{r damage_processing}
+
+```r
 damage.by.event <- effect.by.event %>%
    arrange(desc(totalDamage)) %>%
    select(event,cropDamage,propertyDamage) %>%
@@ -451,7 +669,13 @@ damage.by.event <- effect.by.event %>%
 
 top10.damage.events <- damage.by.event$event
 long.format.damage <- melt(damage.by.event)
+```
 
+```
+## Using event as id variables
+```
+
+```r
 monthly.damage <- storm.data %>%
    filter(event %in% top10.damage.events) %>%
    group_by(event,month) %>%
@@ -488,7 +712,8 @@ cause casualties.
 For readability, the casualty axis in these plots is scaled by the
 `thousands` function in `storm-data-support-functions.R`.
 
-```{r casualty_graphs}
+
+```r
 casualties.g <- ggplot(long.format.casualties, aes(x = event,
 			       y = value,
 			       fill=variable)) +
@@ -539,13 +764,16 @@ much more likely to cause injuries.  There is a definite seasonal
 nature to the casualty data, with tornados doing damage in the spring,
 giving way to heat in the summer.
 
-```{r casualty_panel_plot, fig.cap="Figure 2: Storm-related casualties"}
+
+```r
 grid.newpage()
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(casualties.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
 print(nontornado.casualties.g,vp=viewport(layout.pos.row=2,layout.pos.col=1))
 print(casualty.seasons.g,vp=viewport(layout.pos.row=1:2,layout.pos.col=2))
 ```
+
+![Figure 2: Storm-related casualties](storm-data_files/figure-html/casualty_panel_plot-1.png) 
 
 ## Research Question 2: Economic Consequences of Weather
 
@@ -559,7 +787,8 @@ damage totals $360 billion, while crop damage is only $42 billion.  Of
 the top ten damage-causing events, only drought causes more damage to
 crops than property.
 
-```{r graph_economic_damages}
+
+```r
 damage.g <- ggplot(long.format.damage, aes(x = event,
 			       y = value,
 			       fill=variable)) +
@@ -580,7 +809,8 @@ events as measured by economic impact.  These events are then divided
 into property or crop damage so that both can be plotted on a monthly
 basis to determine seasonal flows.
 
-```{r graph_monthly_economic_damage}
+
+```r
 damage.seasons.g <- ggplot(monthly.damage,aes(
   			x=reorder(month.name[month],month),
 				y=damage,
@@ -610,12 +840,15 @@ during the summer, which is not surprising given the agricultural
 growing season.  Both droughts and floods have similar peak seasons in
 June through September.
 
-```{r plot_damage_graphs, fig.cap="Figure 3: Storm-related economic impacts"}
+
+```r
 grid.newpage()
 pushViewport(viewport(layout=grid.layout(1,2)))
 print(damage.g,vp=viewport(layout.pos.row=1,layout.pos.col=1))
 print(damage.seasons.g,vp=viewport(layout.pos.row=1,layout.pos.col=2))
 ```
+
+![Figure 3: Storm-related economic impacts](storm-data_files/figure-html/plot_damage_graphs-1.png) 
 
 # Further research
 
